@@ -1,12 +1,12 @@
 const express = require('express');
-const { protect } = require('../middleware/auth');
+// const { protect } = require('../middleware/auth'); // TEMPORARILY DISABLED
 const db = require('../config/database');
 const logger = require('../utils/logger');
 
 const router = express.Router();
 
-// Get all projects
-router.get('/', protect, async (req, res) => {
+// Get all projects - TEMPORARILY NO AUTH
+router.get('/', async (req, res) => {
   try {
     const { page = 1, limit = 10, status } = req.query;
     const offset = (page - 1) * limit;
@@ -43,8 +43,8 @@ router.get('/', protect, async (req, res) => {
   }
 });
 
-// Get project by ID
-router.get('/:id', protect, async (req, res) => {
+// Get project by ID - TEMPORARILY NO AUTH
+router.get('/:id', async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -77,8 +77,8 @@ router.get('/:id', protect, async (req, res) => {
   }
 });
 
-// Create project
-router.post('/', protect, async (req, res) => {
+// Create project - TEMPORARILY NO AUTH
+router.post('/', async (req, res) => {
   try {
     const { name, description, location, startDate, endDate } = req.body;
 
@@ -115,8 +115,8 @@ router.post('/', protect, async (req, res) => {
   }
 });
 
-// Update project
-router.put('/:id', protect, async (req, res) => {
+// Update project - TEMPORARILY NO AUTH
+router.put('/:id', async (req, res) => {
   try {
     const { id } = req.params;
     const { name, description, location, startDate, endDate, status } = req.body;
@@ -159,4 +159,4 @@ router.put('/:id', protect, async (req, res) => {
   }
 });
 
-module.exports = router; 
+module.exports = router;

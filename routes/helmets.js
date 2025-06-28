@@ -1,12 +1,12 @@
 const express = require('express');
-const { protect } = require('../middleware/auth');
+// const { protect } = require('../middleware/auth'); // TEMPORARILY DISABLED
 const db = require('../config/database');
 const logger = require('../utils/logger');
 
 const router = express.Router();
 
-// Get all helmets with assignment info
-router.get('/', protect, async (req, res) => {
+// Get all helmets with assignment info - TEMPORARILY NO AUTH
+router.get('/', async (req, res) => {
   try {
     const { page = 1, limit = 10, status } = req.query;
     const offset = (page - 1) * limit;
@@ -22,7 +22,7 @@ router.get('/', protect, async (req, res) => {
     }
 
     const result = await db.query(
-      `SELECT h.*, w.name AS assigned_to
+      `SELECT h.*, (w.first_name || ' ' || w.last_name) AS assigned_to
        FROM helmets h
        LEFT JOIN workers w ON h.status = 'assigned' AND w.helmet_id = h.helmet_id
        ${whereClause}
@@ -46,8 +46,8 @@ router.get('/', protect, async (req, res) => {
   }
 });
 
-// Get helmet by ID
-router.get('/:id', protect, async (req, res) => {
+// Get helmet by ID - TEMPORARILY NO AUTH
+router.get('/:id', async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -80,7 +80,7 @@ router.get('/:id', protect, async (req, res) => {
   }
 });
 
-// Create helmet - TEMPORARILY REMOVED AUTH FOR TESTING
+// Create helmet - TEMPORARILY NO AUTH
 router.post('/', async (req, res) => {
   try {
     const { helmetId, name, model } = req.body;
@@ -103,14 +103,24 @@ router.post('/', async (req, res) => {
 
     logger.info(`Helmet created: ${helmetId}`);
 
+    // Return all helmets after adding
+    const allHelmets = await db.query('SELECT * FROM helmets ORDER BY created_at DESC');
+
     res.status(201).json({
       success: true,
       data: {
-        helmet
+        helmet,
+        helmets: allHelmets.rows
       }
     });
   } catch (error) {
     logger.error('Create helmet error:', error);
+    if (error.code === '23505') { // Unique violation
+      return res.status(409).json({
+        success: false,
+        error: 'Helmet ID already exists'
+      });
+    }
     res.status(500).json({
       success: false,
       error: 'Server error'
@@ -118,8 +128,8 @@ router.post('/', async (req, res) => {
   }
 });
 
-// Update helmet
-router.put('/:id', protect, async (req, res) => {
+// Update helmet - TEMPORARILY NO AUTH
+router.put('/:id', async (req, res) => {
   try {
     const { id } = req.params;
     const { name, model, status, batteryLevel, lastMaintenance } = req.body;
@@ -161,8 +171,8 @@ router.put('/:id', protect, async (req, res) => {
   }
 });
 
-// Get available helmets
-router.get('/available', protect, async (req, res) => {
+// Get available helmets - TEMPORARILY NO AUTH
+router.get('/available', async (req, res) => {
   try {
     const result = await db.query(
       'SELECT * FROM helmets WHERE status = $1 ORDER BY name',

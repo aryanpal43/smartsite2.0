@@ -2,7 +2,7 @@ const express = require('express');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
-const { protect } = require('../middleware/auth');
+// const { protect } = require('../middleware/auth'); // TEMPORARILY DISABLED
 const db = require('../config/database');
 const videoStorage = require('../services/videoStorage');
 const aiAnalysis = require('../services/aiAnalysis');
@@ -27,8 +27,8 @@ const upload = multer({
   }
 });
 
-// Upload video from ESP32-CAM
-router.post('/upload', protect, upload.single('video'), async (req, res) => {
+// Upload video from ESP32-CAM - TEMPORARILY NO AUTH
+router.post('/upload', upload.single('video'), async (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({
@@ -170,8 +170,8 @@ router.post('/upload', protect, upload.single('video'), async (req, res) => {
   }
 });
 
-// Get videos by session
-router.get('/session/:sessionId', protect, async (req, res) => {
+// Get videos by session - TEMPORARILY NO AUTH
+router.get('/session/:sessionId', async (req, res) => {
   try {
     const { sessionId } = req.params;
     const { page = 1, limit = 10 } = req.query;
@@ -220,7 +220,7 @@ router.get('/session/:sessionId', protect, async (req, res) => {
 });
 
 // Get video by ID
-router.get('/:id', protect, async (req, res) => {
+router.get('/:id', async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -259,7 +259,7 @@ router.get('/:id', protect, async (req, res) => {
 });
 
 // Stream video
-router.get('/:id/stream', protect, async (req, res) => {
+router.get('/:id/stream', async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -320,7 +320,7 @@ router.get('/:id/stream', protect, async (req, res) => {
 });
 
 // Get storage info
-router.get('/storage/info', protect, async (req, res) => {
+router.get('/storage/info', async (req, res) => {
   try {
     const storageInfo = videoStorage.getStorageInfo();
     

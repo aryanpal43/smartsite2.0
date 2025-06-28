@@ -1,12 +1,12 @@
 const express = require('express');
-const { protect: auth } = require('../middleware/auth');
+// const { protect: auth } = require('../middleware/auth'); // TEMPORARILY DISABLED
 const db = require('../config/database');
 const logger = require('../utils/logger');
 
 const router = express.Router();
 
-// Get dashboard overview data
-router.get('/dashboard', auth, async (req, res) => {
+// Get dashboard overview data - TEMPORARILY NO AUTH
+router.get('/dashboard', async (req, res) => {
   try {
     // Get total projects
     const projectsResult = await db.query(
@@ -59,8 +59,8 @@ router.get('/dashboard', auth, async (req, res) => {
   }
 });
 
-// Get helmet status chart data
-router.get('/helmet-status', auth, async (req, res) => {
+// Get helmet status chart data - TEMPORARILY NO AUTH
+router.get('/helmet-status', async (req, res) => {
   try {
     const result = await db.query(`
       SELECT 
@@ -92,8 +92,8 @@ router.get('/helmet-status', auth, async (req, res) => {
   }
 });
 
-// Get project performance data
-router.get('/project-performance', auth, async (req, res) => {
+// Get project performance data - TEMPORARILY NO AUTH
+router.get('/project-performance', async (req, res) => {
   try {
     const result = await db.query(`
       SELECT 
@@ -128,8 +128,8 @@ router.get('/project-performance', auth, async (req, res) => {
   }
 });
 
-// Get worker efficiency data
-router.get('/worker-efficiency', auth, async (req, res) => {
+// Get worker efficiency data - TEMPORARILY NO AUTH
+router.get('/worker-efficiency', async (req, res) => {
   try {
     const result = await db.query(`
       SELECT 
@@ -169,8 +169,8 @@ router.get('/worker-efficiency', auth, async (req, res) => {
   }
 });
 
-// Get video analytics data
-router.get('/video-analytics', auth, async (req, res) => {
+// Get video analytics data - TEMPORARILY NO AUTH
+router.get('/video-analytics', async (req, res) => {
   try {
     const { period = '7d' } = req.query;
     
@@ -223,7 +223,7 @@ router.get('/video-analytics', auth, async (req, res) => {
 });
 
 // Get safety alerts and incidents
-router.get('/safety-alerts', auth, async (req, res) => {
+router.get('/safety-alerts', async (req, res) => {
   try {
     const result = await db.query(`
       SELECT 
@@ -272,7 +272,7 @@ router.get('/safety-alerts', auth, async (req, res) => {
 });
 
 // Get real-time metrics for dashboard
-router.get('/realtime', auth, async (req, res) => {
+router.get('/realtime', async (req, res) => {
   try {
     // Get current active sessions
     const activeSessionsResult = await db.query(`

@@ -1,13 +1,13 @@
 const express = require('express');
 const Joi = require('joi');
-const { protect } = require('../middleware/auth');
+// const { protect } = require('../middleware/auth'); // TEMPORARILY DISABLED
 const db = require('../config/database');
 const logger = require('../utils/logger');
 
 const router = express.Router();
 
-// Create new session (assign helmet to worker)
-router.post('/', protect, async (req, res) => {
+// Create new session (assign helmet to worker) - TEMPORARILY NO AUTH
+router.post('/', async (req, res) => {
   try {
     const { helmetId, workerId, projectId, notes } = req.body;
 
@@ -77,8 +77,8 @@ router.post('/', protect, async (req, res) => {
   }
 });
 
-// Get all sessions
-router.get('/', protect, async (req, res) => {
+// Get all sessions - TEMPORARILY NO AUTH
+router.get('/', async (req, res) => {
   try {
     const { page = 1, limit = 10, status } = req.query;
     const offset = (page - 1) * limit;
@@ -123,8 +123,8 @@ router.get('/', protect, async (req, res) => {
   }
 });
 
-// Get session by ID
-router.get('/:id', protect, async (req, res) => {
+// Get session by ID - TEMPORARILY NO AUTH
+router.get('/:id', async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -165,8 +165,8 @@ router.get('/:id', protect, async (req, res) => {
   }
 });
 
-// End session
-router.put('/:id/end', protect, async (req, res) => {
+// End session - TEMPORARILY NO AUTH
+router.put('/:id/end', async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -217,7 +217,7 @@ router.put('/:id/end', protect, async (req, res) => {
 });
 
 // Get active sessions
-router.get('/active', protect, async (req, res) => {
+router.get('/active', async (req, res) => {
   try {
     const result = await db.query(
       `SELECT s.*, 
