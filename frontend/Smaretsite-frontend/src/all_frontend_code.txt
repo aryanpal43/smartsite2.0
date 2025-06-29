@@ -1,0 +1,4743 @@
+
+
+====== FILE: ./app/helmet/assign-helmet/page.tsx ======
+
+'use client';
+
+import React, { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import Link from 'next/link';
+import Header from '@/components/common/Header';
+import Sidebar from '@/components/common/Sidebar';
+import Card from '@/components/common/Card';
+import Image from 'next/image';
+import { Search, ArrowLeft, AlertCircle, CheckCircle, UserPlus } from 'lucide-react';
+
+export default function AssignHelmet() {
+  const router = useRouter();
+  const [selectedHelmet, setSelectedHelmet] = useState(null);
+  const [selectedWorker, setSelectedWorker] = useState(null);
+  const [helmetSearchTerm, setHelmetSearchTerm] = useState('');
+  const [workerSearchTerm, setWorkerSearchTerm] = useState('');
+  const [showHelmetNotFoundAlert, setShowHelmetNotFoundAlert] = useState(false);
+  const [showWorkerNotFoundAlert, setShowWorkerNotFoundAlert] = useState(false);
+  const [assignmentSuccess, setAssignmentSuccess] = useState(false);
+  const [showAddWorkerModal, setShowAddWorkerModal] = useState(false);
+  const [helmetResults, setHelmetResults] = useState([]);
+  const [workerResults, setWorkerResults] = useState([]);
+  
+  // Sample data for helmets and workers (in real app, this would come from API)
+  const helmets = [
+    { id: 'HLM-001', status: 'Available', battery: '92%', lastUsed: '2025-05-15', condition: 'Excellent' },
+    { id: 'HLM-005', status: 'Available', battery: '87%', lastUsed: '2025-05-16', condition: 'Good' },
+    { id: 'HLM-008', status: 'Available', battery: '100%', lastUsed: '2025-05-14', condition: 'Excellent' },
+  ];
+
+  const workers = [
+    { id: 'W-001', name: 'John Doe', role: 'Excavator', department: 'Construction', helmetAssigned: 'None' },
+    { id: 'W-003', name: 'Mike Brown', role: 'Electrician', department: 'Electrical', helmetAssigned: 'None' },
+    { id: 'W-004', name: 'Sarah Wilson', role: 'Safety Officer', department: 'Safety', helmetAssigned: 'None' },
+  ];
+
+  // Real-time helmet search suggestions
+  const handleHelmetSearch = () => {
+    if (!helmetSearchTerm.trim()) {
+      setHelmetResults([]);
+      return;
+    }
+    
+    const results = helmets.filter(helmet => 
+      helmet.id.toLowerCase().includes(helmetSearchTerm.toLowerCase()) && 
+      helmet.status === 'Available'
+    );
+    
+    setHelmetResults(results);
+    if (results.length === 0) {
+      setShowHelmetNotFoundAlert(true);
+      setTimeout(() => setShowHelmetNotFoundAlert(false), 3000);
+    } else {
+      setSelectedHelmet(results[0]);
+    }
+  };
+
+  // Auto-suggest for helmet search as user types
+  useEffect(() => {
+    if (helmetSearchTerm.trim().length >= 1) {
+      const results = helmets.filter(helmet => 
+        helmet.id.toLowerCase().includes(helmetSearchTerm.toLowerCase()) && 
+        helmet.status === 'Available'
+      );
+      setHelmetResults(results);
+    } else {
+      setHelmetResults([]);
+    }
+  }, [helmetSearchTerm]);
+
+  // Real-time worker search suggestions
+  const handleWorkerSearch = () => {
+    if (!workerSearchTerm.trim()) {
+      setWorkerResults([]);
+      return;
+    }
+    
+    const results = workers.filter(worker => 
+      worker.name.toLowerCase().includes(workerSearchTerm.toLowerCase()) || 
+      worker.id.toLowerCase().includes(workerSearchTerm.toLowerCase())
+    );
+    
+    setWorkerResults(results);
+    if (results.length === 0) {
+      setShowWorkerNotFoundAlert(true);
+      setTimeout(() => setShowWorkerNotFoundAlert(false), 3000);
+    } else {
+      setSelectedWorker(results[0]);
+    }
+  };
+
+  // Auto-suggest for worker search as user types
+  useEffect(() => {
+    if (workerSearchTerm.trim().length >= 1) {
+      const results = workers.filter(worker => 
+        worker.name.toLowerCase().includes(workerSearchTerm.toLowerCase()) || 
+        worker.id.toLowerCase().includes(workerSearchTerm.toLowerCase())
+      );
+      setWorkerResults(results);
+    } else {
+      setWorkerResults([]);
+    }
+  }, [workerSearchTerm]);
+
+  // Handle assignment
+  const handleAssign = () => {
+    if (selectedHelmet && selectedWorker) {
+      console.log(`Assigning helmet ${selectedHelmet.id} to worker ${selectedWorker.name}`);
+      setAssignmentSuccess(true);
+      
+      // In a real application, you would make an API call here
+      
+      setTimeout(() => {
+        setAssignmentSuccess(false);
+        router.push('/helmet');
+      }, 2000);
+    }
+  };
+
+  // Monitor for Enter key presses in search fields
+  useEffect(() => {
+    const handleKeyPress = (e) => {
+      if (e.key === 'Enter' && document.activeElement.id === 'helmet-search') {
+        handleHelmetSearch();
+      } else if (e.key === 'Enter' && document.activeElement.id === 'worker-search') {
+        handleWorkerSearch();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyPress);
+    return () => window.removeEventListener('keydown', handleKeyPress);
+  }, [helmetSearchTerm, workerSearchTerm]);
+
+  // Navigate back to helmet page
+  const handleBack = () => {
+    router.push('/helmet');
+  };
+
+  // Show modal to add a new worker
+  const openAddWorkerModal = () => {
+    setShowAddWorkerModal(true);
+  };
+  
+  // In a real app, this would add the worker to the database
+  const handleAddWorker = (e) => {
+    e.preventDefault();
+    // Process form data and add user to database
+    setShowAddWorkerModal(false);
+    
+    // Create a new worker from the form
+    const newWorker = {
+      id: `W-${Math.floor(1000 + Math.random() * 9000)}`,
+      name: e.target.elements.name.value,
+      role: e.target.elements.role.value,
+      department: e.target.elements.department.value,
+      helmetAssigned: 'None'
+    };
+    
+    // Update worker results and select the new worker
+    setSelectedWorker(newWorker);
+    setWorkerResults([newWorker]);
+  };
+
+  return (
+    <div>
+        
+        <div className="flex-1 overflow-y-auto p-0">
+          <Card className="p-6 mb-6">
+            {/* Page header with back button */}
+            <div className="flex justify-between items-center mb-6">
+              <div className="flex items-center">
+                <button 
+                  onClick={handleBack}
+                  className="flex items-center mr-4 text-gray-600 hover:text-purple-600 transition-colors"
+                >
+                  <ArrowLeft className="mr-2" size={20} />
+                  Back
+                </button>
+                <h1 className="text-2xl font-bold text-[#05004e]">Assign Helmet</h1>
+              </div>
+            </div>
+
+            {/* Notification Alerts */}
+            {showHelmetNotFoundAlert && (
+              <div className="mb-4 flex items-center p-4 bg-red-100 text-red-700 rounded-lg shadow animate-fadeIn">
+                <AlertCircle className="mr-2" size={20} />
+                Helmet not found! Please check the ID and try again.
+              </div>
+            )}
+            
+            {showWorkerNotFoundAlert && (
+              <div className="mb-4 flex items-center p-4 bg-red-100 text-red-700 rounded-lg shadow animate-fadeIn">
+                <AlertCircle className="mr-2" size={20} />
+                Worker not found! Would you like to add a new worker?
+              </div>
+            )}
+            
+            {assignmentSuccess && (
+              <div className="mb-4 flex items-center p-4 bg-green-100 text-green-700 rounded-lg shadow animate-fadeIn">
+                <CheckCircle className="mr-2" size={20} />
+                Helmet successfully assigned! Redirecting...
+              </div>
+            )}
+
+            {/* Helmet Icon */}
+            <div className="flex justify-center mb-8">
+              <div className="bg-white p-6 rounded-full shadow-md border border-purple-100">
+                <Image 
+                  src="/images/img_vector.svg" 
+                  alt="Helmet Icon" 
+                  width={100} 
+                  height={100}
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Helmet Search Section */}
+              <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-100">
+                <h2 className="text-xl font-semibold mb-4 text-[#05004e]">Select Helmet</h2>
+                
+                <div className="mb-4 relative">
+                  <div className="flex">
+                    <div className="relative flex-grow">
+                      <input
+                        id="helmet-search"
+                        type="text"
+                        placeholder="Search helmet by ID..."
+                        className="pl-9 pr-4 py-3 w-full border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                        value={helmetSearchTerm}
+                        onChange={(e) => setHelmetSearchTerm(e.target.value)}
+                      />
+                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
+                    </div>
+                    <button
+                      onClick={handleHelmetSearch}
+                      className="ml-2 px-4 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+                    >
+                      Search
+                    </button>
+                  </div>
+                </div>
+
+                {/* Helmet Results */}
+                {helmetResults.length > 0 && (
+                  <div className="mt-4">
+                    <h3 className="text-md font-medium mb-2 text-gray-700">Available Helmets</h3>
+                    <div className="max-h-48 overflow-y-auto border border-gray-200 rounded-lg divide-y divide-gray-200">
+                      {helmetResults.map(helmet => (
+                        <div 
+                          key={helmet.id}
+                          className={`p-4 cursor-pointer hover:bg-purple-50 transition-colors flex justify-between items-center ${selectedHelmet?.id === helmet.id ? 'bg-purple-50 border-l-4 border-purple-500' : ''}`}
+                          onClick={() => {
+                            setSelectedHelmet(helmet);
+                            setHelmetSearchTerm(helmet.id);
+                          }}
+                        >
+                          <div>
+                            <p className="font-medium text-gray-800">{helmet.id}</p>
+                            <div className="flex text-sm text-gray-600">
+                              <span className={`mr-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${
+                                helmet.condition === 'Excellent' ? 'bg-green-100 text-green-800' : 
+                                helmet.condition === 'Good' ? 'bg-blue-100 text-blue-800' : 
+                                'bg-yellow-100 text-yellow-800'
+                              }`}>
+                                {helmet.condition}
+                              </span>
+                              <span className="inline-flex items-center">
+                                <span className={`w-2 h-2 mr-1 rounded-full ${
+                                  parseInt(helmet.battery) > 90 ? 'bg-green-500' : 
+                                  parseInt(helmet.battery) > 70 ? 'bg-yellow-500' : 
+                                  'bg-red-500'
+                                }`}></span>
+                                {helmet.battery}
+                              </span>
+                            </div>
+                          </div>
+                          {selectedHelmet?.id === helmet.id && (
+                            <CheckCircle className="text-purple-500" size={20} />
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Selected Helmet Details */}
+                {selectedHelmet && (
+                  <div className="mt-6 p-4 bg-purple-50 rounded-lg border border-purple-200">
+                    <h3 className="text-md font-medium mb-3 text-gray-700">Selected Helmet Details</h3>
+                    <div className="grid grid-cols-2 gap-2">
+                      <div className="text-sm">
+                        <p className="text-gray-500">ID:</p>
+                        <p className="font-medium">{selectedHelmet.id}</p>
+                      </div>
+                      <div className="text-sm">
+                        <p className="text-gray-500">Status:</p>
+                        <p className="font-medium">{selectedHelmet.status}</p>
+                      </div>
+                      <div className="text-sm">
+                        <p className="text-gray-500">Battery:</p>
+                        <p className="font-medium">{selectedHelmet.battery}</p>
+                      </div>
+                      <div className="text-sm">
+                        <p className="text-gray-500">Condition:</p>
+                        <p className="font-medium">{selectedHelmet.condition}</p>
+                      </div>
+                      <div className="text-sm col-span-2">
+                        <p className="text-gray-500">Last Used:</p>
+                        <p className="font-medium">{selectedHelmet.lastUsed}</p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Worker Search Section */}
+              <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-100">
+                <h2 className="text-xl font-semibold mb-4 text-[#05004e]">Select Worker</h2>
+                
+                <div className="mb-4">
+                  <div className="flex">
+                    <div className="relative flex-grow">
+                      <input
+                        id="worker-search"
+                        type="text"
+                        placeholder="Search worker by name or ID..."
+                        className="pl-9 pr-4 py-3 w-full border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                        value={workerSearchTerm}
+                        onChange={(e) => setWorkerSearchTerm(e.target.value)}
+                      />
+                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
+                    </div>
+                    <button
+                      onClick={handleWorkerSearch}
+                      className="ml-2 px-4 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+                    >
+                      Search
+                    </button>
+                    <button
+                      onClick={openAddWorkerModal}
+                      className="ml-2 px-4 py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
+                      title="Add New Worker"
+                    >
+                      <UserPlus size={18} />
+                    </button>
+                  </div>
+                </div>
+
+                {/* Worker Results */}
+                {workerResults.length > 0 && (
+                  <div className="mt-4">
+                    <h3 className="text-md font-medium mb-2 text-gray-700">Available Workers</h3>
+                    <div className="max-h-48 overflow-y-auto border border-gray-200 rounded-lg divide-y divide-gray-200">
+                      {workerResults.map(worker => (
+                        <div 
+                          key={worker.id}
+                          className={`p-4 cursor-pointer hover:bg-purple-50 transition-colors flex justify-between items-center ${selectedWorker?.id === worker.id ? 'bg-purple-50 border-l-4 border-purple-500' : ''}`}
+                          onClick={() => {
+                            setSelectedWorker(worker);
+                            setWorkerSearchTerm(worker.name);
+                          }}
+                        >
+                          <div>
+                            <p className="font-medium text-gray-800">{worker.name}</p>
+                            <div className="flex text-sm text-gray-600">
+                              <span className="mr-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-800">
+                                {worker.id}
+                              </span>
+                              <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${
+                                worker.department === 'Construction' ? 'bg-orange-100 text-orange-800' : 
+                                worker.department === 'Electrical' ? 'bg-blue-100 text-blue-800' : 
+                                worker.department === 'Safety' ? 'bg-green-100 text-green-800' : 
+                                'bg-purple-100 text-purple-800'
+                              }`}>
+                                {worker.department}
+                              </span>
+                            </div>
+                            <p className="text-xs text-gray-500 mt-1">{worker.role}</p>
+                          </div>
+                          {selectedWorker?.id === worker.id && (
+                            <CheckCircle className="text-purple-500" size={20} />
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Selected Worker Details */}
+                {selectedWorker && (
+                  <div className="mt-6 p-4 bg-purple-50 rounded-lg border border-purple-200">
+                    <h3 className="text-md font-medium mb-3 text-gray-700">Selected Worker Details</h3>
+                    <div className="grid grid-cols-2 gap-2">
+                      <div className="text-sm">
+                        <p className="text-gray-500">ID:</p>
+                        <p className="font-medium">{selectedWorker.id}</p>
+                      </div>
+                      <div className="text-sm">
+                        <p className="text-gray-500">Name:</p>
+                        <p className="font-medium">{selectedWorker.name}</p>
+                      </div>
+                      <div className="text-sm">
+                        <p className="text-gray-500">Role:</p>
+                        <p className="font-medium">{selectedWorker.role}</p>
+                      </div>
+                      <div className="text-sm">
+                        <p className="text-gray-500">Department:</p>
+                        <p className="font-medium">{selectedWorker.department}</p>
+                      </div>
+                      <div className="text-sm col-span-2">
+                        <p className="text-gray-500">Current Helmet:</p>
+                        <p className="font-medium">{selectedWorker.helmetAssigned}</p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Assign Button */}
+            <div className="mt-8 flex justify-center">
+              <button
+                onClick={handleAssign}
+                disabled={!selectedHelmet || !selectedWorker}
+                className={`px-8 py-4 text-lg font-medium rounded-lg shadow transition-colors ${
+                  selectedHelmet && selectedWorker
+                    ? 'bg-purple-600 text-white hover:bg-purple-700'
+                    : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                }`}
+              >
+                Assign Helmet
+              </button>
+            </div>
+          </Card>
+        </div>
+      {/* Add Worker Modal */}
+      {showAddWorkerModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-full max-w-md">
+            <h3 className="text-xl font-bold mb-4 text-[#05004e]">Add New Worker</h3>
+            
+            <form onSubmit={handleAddWorker}>
+              <div className="mb-4">
+                <label className="block text-gray-700 text-sm font-medium mb-1">Full Name</label>
+                <input 
+                  type="text" 
+                  name="name"
+                  required
+                  className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                />
+              </div>
+              
+              <div className="mb-4">
+                <label className="block text-gray-700 text-sm font-medium mb-1">Role</label>
+                <input 
+                  type="text" 
+                  name="role"
+                  required
+                  className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                />
+              </div>
+              
+              <div className="mb-6">
+                <label className="block text-gray-700 text-sm font-medium mb-1">Department</label>
+                <select 
+                  name="department"
+                  required
+                  className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                >
+                  <option value="">Select Department</option>
+                  <option value="Construction">Construction</option>
+                  <option value="Electrical">Electrical</option>
+                  <option value="Management">Management</option>
+                  <option value="Safety">Safety</option>
+                </select>
+              </div>
+              
+              <div className="flex justify-end space-x-3">
+                <button
+                  type="button"
+                  onClick={() => setShowAddWorkerModal(false)}
+                  className="px-4 py-2 text-gray-700 border border-gray-300 rounded hover:bg-gray-100"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-700"
+                >
+                  Add Worker
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+====== FILE: ./app/helmet/deassign-helmet/page.tsx ======
+
+"use client";
+
+import React, { useState } from 'react';
+import { Search, ArrowLeft, AlertTriangle, CheckCircle, Filter, X, ChevronDown, ChevronUp } from 'lucide-react';
+
+// Card component
+const Card = ({ children, className = '' }) => {
+  return (
+    <div className={`bg-white rounded-lg shadow-sm border border-gray-200 ${className}`}>
+      {children}
+    </div>
+  );
+};
+
+// Main component
+export default function DeassignHelmet() {
+  // State management
+  const [searchTerm, setSearchTerm] = useState('');
+  const [deassignSuccess, setDeassignSuccess] = useState(false);
+  const [confirmationOpen, setConfirmationOpen] = useState(false);
+  const [helmetToDeassign, setHelmetToDeassign] = useState(null);
+  const [filterOpen, setFilterOpen] = useState(false);
+  const [sortField, setSortField] = useState('');
+  const [sortDirection, setSortDirection] = useState('asc');
+  const [filterDepartment, setFilterDepartment] = useState('');
+  
+  const [assignedHelmets, setAssignedHelmets] = useState([
+    { 
+      helmetId: 'HLM-002', 
+      userName: 'Jane Smith', 
+      assignedTime: '2025-05-18 09:30', 
+      spentTime: '2d 4h 27m',
+      userId: 'W-002',
+      department: 'Management',
+      projectId: 'Project_ID_B2',
+      status: 'Active'
+    },
+    { 
+      helmetId: 'HLM-004', 
+      userName: 'Robert Chen', 
+      assignedTime: '2025-05-16 14:15', 
+      spentTime: '4d 1h 12m',
+      userId: 'W-007',
+      department: 'Electrical',
+      projectId: 'Project_ID_A3',
+      status: 'Active'
+    },
+    { 
+      helmetId: 'HLM-008', 
+      userName: 'Maria Garcia', 
+      assignedTime: '2025-05-19 07:45', 
+      spentTime: '0d 7h 42m',
+      userId: 'W-012',
+      department: 'Construction',
+      projectId: 'Project_ID_D1',
+      status: 'Inactive'
+    },
+    { 
+      helmetId: 'HLM-005', 
+      userName: 'Thomas Wright', 
+      assignedTime: '2025-05-17 11:20', 
+      spentTime: '3d 0h 57m',
+      userId: 'W-009',
+      department: 'Safety',
+      projectId: 'Project_ID_C2',
+      status: 'Active'
+    },
+    { 
+      helmetId: 'HLM-010', 
+      userName: 'Sarah Johnson', 
+      assignedTime: '2025-05-15 08:30', 
+      spentTime: '5d 7h 47m',
+      userId: 'W-015',
+      department: 'Management',
+      projectId: 'Project_ID_B2',
+      status: 'Active'
+    },
+    { 
+      helmetId: 'HLM-013', 
+      userName: 'David Lee', 
+      assignedTime: '2025-05-18 13:45', 
+      spentTime: '2d 0h 32m',
+      userId: 'W-021',
+      department: 'Electrical',
+      projectId: 'Project_ID_A3',
+      status: 'Inactive'
+    },
+  ]);
+
+  // Stats for metrics section
+  const metrics = {
+    totalAssigned: assignedHelmets.length,
+    activeHelmets: assignedHelmets.filter(h => h.status === 'Active').length,
+    inactiveHelmets: assignedHelmets.filter(h => h.status === 'Inactive').length,
+    departments: [...new Set(assignedHelmets.map(h => h.department))]
+  };
+
+  // Handle filtering
+  const filteredHelmets = assignedHelmets.filter(helmet => {
+    const searchLower = searchTerm.toLowerCase();
+    const matchesSearch = 
+      helmet.helmetId.toLowerCase().includes(searchLower) ||
+      helmet.userName.toLowerCase().includes(searchLower) ||
+      helmet.userId.toLowerCase().includes(searchLower) ||
+      helmet.department.toLowerCase().includes(searchLower) ||
+      helmet.projectId.toLowerCase().includes(searchLower);
+    
+    // Apply department filter if set
+    const matchesDepartment = filterDepartment ? 
+      helmet.department === filterDepartment : true;
+    
+    return matchesSearch && matchesDepartment;
+  });
+
+  // Handle sorting
+  const sortedHelmets = [...filteredHelmets].sort((a, b) => {
+    if (!sortField) return 0;
+    
+    let valueA = a[sortField];
+    let valueB = b[sortField];
+    
+    if (typeof valueA === 'string') {
+      valueA = valueA.toLowerCase();
+      valueB = valueB.toLowerCase();
+    }
+    
+    if (valueA < valueB) return sortDirection === 'asc' ? -1 : 1;
+    if (valueA > valueB) return sortDirection === 'asc' ? 1 : -1;
+    return 0;
+  });
+
+  // Handle sort toggle
+  const handleSort = (field) => {
+    if (sortField === field) {
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortField(field);
+      setSortDirection('asc');
+    }
+  };
+
+  // Handle deassign confirmation
+  const openConfirmation = (helmet) => {
+    setHelmetToDeassign(helmet);
+    setConfirmationOpen(true);
+  };
+
+  // Handle deassign action
+  const handleDeassign = () => {
+    setAssignedHelmets(prevHelmets => 
+      prevHelmets.filter(helmet => helmet.helmetId !== helmetToDeassign.helmetId)
+    );
+    setConfirmationOpen(false);
+    setDeassignSuccess(true);
+    
+    // Reset success message after 3 seconds
+    setTimeout(() => {
+      setDeassignSuccess(false);
+    }, 3000);
+  };
+
+  // Get sort icon
+  const getSortIcon = (field) => {
+    if (sortField !== field) return null;
+    return sortDirection === 'asc' ? <ChevronUp size={16} /> : <ChevronDown size={16} />;
+  };
+
+  return (
+    <div className="flex flex-col h-screen bg-[#fafbfc]">
+      <div className="flex-1 overflow-auto p-2">
+        {/* Page header */}
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center space-x-4">
+            <button 
+              onClick={() => window.history.back()}
+              className="flex items-center text-gray-600 hover:text-gray-900 transition-colors"
+            >
+              <ArrowLeft size={20} className="mr-1" />
+              <span>Back</span>
+            </button>
+            <h1 className="text-2xl font-bold text-[#05004e]">Deassign Helmet</h1>
+          </div>
+          
+          <div className="flex space-x-3">
+            <button 
+              onClick={() => setFilterOpen(!filterOpen)} 
+              className={`flex items-center px-4 py-2 rounded-lg border text-sm font-medium transition-colors ${
+                filterOpen || filterDepartment 
+                  ? 'bg-purple-100 text-purple-700 border-purple-300' 
+                  : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+              }`}
+            >
+              <Filter size={16} className="mr-2" />
+              Filter
+              {filterDepartment && <span className="ml-1">({filterDepartment})</span>}
+            </button>
+            
+            <button 
+              className="flex items-center px-4 py-2 bg-purple-600 text-white rounded-lg text-sm font-medium hover:bg-purple-700 transition-colors"
+            >
+              Export Data
+            </button>
+          </div>
+        </div>
+
+        {/* Success message */}
+        {deassignSuccess && (
+          <div className="mb-6 flex items-center p-4 bg-green-100 text-green-700 rounded-lg shadow animate-fade-in">
+            <CheckCircle className="mr-2" size={20} />
+            <span>Helmet successfully deassigned!</span>
+            <button 
+              onClick={() => setDeassignSuccess(false)}
+              className="ml-auto text-green-700 hover:text-green-900"
+            >
+              <X size={16} />
+            </button>
+          </div>
+        )}
+
+        {/* Metrics section */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+          <Card className="p-6">
+            <div className="flex flex-col">
+              <span className="text-sm text-gray-500">Total Helmets Assigned</span>
+              <span className="text-3xl font-bold text-purple-700">{metrics.totalAssigned}</span>
+            </div>
+          </Card>
+          
+          <Card className="p-6">
+            <div className="flex flex-col">
+              <span className="text-sm text-gray-500">Active Helmets</span>
+              <div className="flex items-end">
+                <span className="text-3xl font-bold text-green-600">{metrics.activeHelmets}</span>
+                <span className="text-sm text-gray-500 ml-2 mb-1">
+                  ({Math.round((metrics.activeHelmets / metrics.totalAssigned) * 100)}%)
+                </span>
+              </div>
+            </div>
+          </Card>
+          
+          <Card className="p-6">
+            <div className="flex flex-col">
+              <span className="text-sm text-gray-500">Inactive Helmets</span>
+              <div className="flex items-end">
+                <span className="text-3xl font-bold text-red-600">{metrics.inactiveHelmets}</span>
+                <span className="text-sm text-gray-500 ml-2 mb-1">
+                  ({Math.round((metrics.inactiveHelmets / metrics.totalAssigned) * 100)}%)
+                </span>
+              </div>
+            </div>
+          </Card>
+        </div>
+
+        {/* Filter dropdown */}
+        {filterOpen && (
+          <Card className="p-4 mb-6 animate-fade-in">
+            <div className="flex flex-col space-y-4">
+              <h3 className="font-medium">Filter Options</h3>
+              
+              <div className="flex flex-col">
+                <span className="text-sm text-gray-500 mb-1">Department</span>
+                <div className="flex flex-wrap gap-2">
+                  <button 
+                    onClick={() => setFilterDepartment('')}
+                    className={`px-3 py-1 rounded-full text-sm transition-colors ${
+                      filterDepartment === '' 
+                        ? 'bg-purple-600 text-white' 
+                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    }`}
+                  >
+                    All
+                  </button>
+                  
+                  {metrics.departments.map((dept, index) => (
+                    <button 
+                      key={index}
+                      onClick={() => setFilterDepartment(dept)}
+                      className={`px-3 py-1 rounded-full text-sm transition-colors ${
+                        filterDepartment === dept 
+                          ? 'bg-purple-600 text-white' 
+                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                      }`}
+                    >
+                      {dept}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              
+              <div className="flex justify-end">
+                <button 
+                  onClick={() => setFilterOpen(false)}
+                  className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-300 transition-colors"
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+          </Card>
+        )}
+
+        {/* Search bar - full width */}
+        <div className="mb-6">
+          <div className="relative">
+            <input
+              type="text"
+              placeholder="Search by helmet ID, worker name, or project..."
+              className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 text-md"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
+            {searchTerm && (
+              <button 
+                onClick={() => setSearchTerm('')}
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+              >
+                <X size={16} />
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* Table */}
+        <Card className="overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th 
+                    scope="col" 
+                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
+                    onClick={() => handleSort('helmetId')}
+                  >
+                    <div className="flex items-center">
+                      Helmet ID
+                      {getSortIcon('helmetId')}
+                    </div>
+                  </th>
+                  <th 
+                    scope="col" 
+                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
+                    onClick={() => handleSort('userName')}
+                  >
+                    <div className="flex items-center">
+                      Worker Name
+                      {getSortIcon('userName')}
+                    </div>
+                  </th>
+                  <th 
+                    scope="col" 
+                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
+                    onClick={() => handleSort('userId')}
+                  >
+                    <div className="flex items-center">
+                      Worker ID
+                      {getSortIcon('userId')}
+                    </div>
+                  </th>
+                  <th 
+                    scope="col" 
+                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
+                    onClick={() => handleSort('department')}
+                  >
+                    <div className="flex items-center">
+                      Department
+                      {getSortIcon('department')}
+                    </div>
+                  </th>
+                  <th 
+                    scope="col" 
+                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
+                    onClick={() => handleSort('assignedTime')}
+                  >
+                    <div className="flex items-center">
+                      Assignment Time
+                      {getSortIcon('assignedTime')}
+                    </div>
+                  </th>
+                  <th 
+                    scope="col" 
+                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
+                    onClick={() => handleSort('spentTime')}
+                  >
+                    <div className="flex items-center">
+                      Time Active
+                      {getSortIcon('spentTime')}
+                    </div>
+                  </th>
+                  <th 
+                    scope="col" 
+                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
+                    onClick={() => handleSort('projectId')}
+                  >
+                    <div className="flex items-center">
+                      Project
+                      {getSortIcon('projectId')}
+                    </div>
+                  </th>
+                  <th 
+                    scope="col" 
+                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
+                    onClick={() => handleSort('status')}
+                  >
+                    <div className="flex items-center">
+                      Status
+                      {getSortIcon('status')}
+                    </div>
+                  </th>
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Action
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {sortedHelmets.length > 0 ? (
+                  sortedHelmets.map((helmet, index) => (
+                    <tr key={index} className="hover:bg-gray-50 transition-colors">
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className="text-sm font-medium text-gray-900">{helmet.helmetId}</span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className="text-sm text-gray-900">{helmet.userName}</span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className="text-sm text-gray-600">{helmet.userId}</span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className="text-sm text-gray-600">{helmet.department}</span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className="text-sm text-gray-600">{helmet.assignedTime}</span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className="text-sm text-gray-600">{helmet.spentTime}</span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className="text-sm text-blue-600 hover:text-blue-800 hover:underline cursor-pointer">{helmet.projectId}</span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                          helmet.status === 'Active' 
+                            ? 'bg-green-100 text-green-800' 
+                            : 'bg-red-100 text-red-800'
+                        }`}>
+                          {helmet.status}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <button 
+                          onClick={() => openConfirmation(helmet)}
+                          className="px-4 py-1 bg-red-800 text-red-100 rounded-lg hover:bg-red-700 transition-colors text-sm font-medium"
+                        >
+                          Deassign
+                        </button>
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan="9" className="px-6 py-12 text-center text-gray-500">
+                      {searchTerm || filterDepartment ? 
+                        "No helmets found matching your search criteria." : 
+                        "No helmets are currently assigned."
+                      }
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </Card>
+
+        {/* Pagination */}
+        <div className="mt-6 flex justify-between items-center">
+          <div className="text-sm text-gray-500">
+            Showing <span className="font-medium">{sortedHelmets.length}</span> of <span className="font-medium">{assignedHelmets.length}</span> helmets
+          </div>
+          
+          <div className="flex space-x-1">
+            <button className="px-4 py-2 border border-gray-300 rounded-md bg-white text-gray-700 text-sm">
+              Previous
+            </button>
+            <button className="px-4 py-2 border border-gray-300 rounded-md bg-purple-600 text-white text-sm">
+              1
+            </button>
+            <button className="px-4 py-2 border border-gray-300 rounded-md bg-white text-gray-700 text-sm">
+              2
+            </button>
+            <button className="px-4 py-2 border border-gray-300 rounded-md bg-white text-gray-700 text-sm">
+              Next
+            </button>
+          </div>
+        </div>
+
+        {/* Deassignment confirmation dialog */}
+        {confirmationOpen && helmetToDeassign && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg shadow-xl p-6 max-w-md w-full mx-4 animate-fade-in">
+              <div className="flex items-center mb-4 text-yellow-500">
+                <AlertTriangle size={24} className="mr-2" />
+                <h3 className="text-lg font-medium">Confirm Deassignment</h3>
+              </div>
+              
+              <div className="border-t border-b border-gray-200 py-4 my-4">
+                <div className="grid grid-cols-2 gap-y-2">
+                  <div className="text-gray-500">Helmet ID:</div>
+                  <div className="font-medium">{helmetToDeassign.helmetId}</div>
+                  
+                  <div className="text-gray-500">Worker Name:</div>
+                  <div className="font-medium">{helmetToDeassign.userName}</div>
+                  
+                  <div className="text-gray-500">Department:</div>
+                  <div className="font-medium">{helmetToDeassign.department}</div>
+                  
+                  <div className="text-gray-500">Project:</div>
+                  <div className="font-medium">{helmetToDeassign.projectId}</div>
+                </div>
+              </div>
+              
+              <p className="text-gray-700 mb-6">
+                Are you sure you want to deassign this helmet? This action cannot be undone.
+              </p>
+              
+              <div className="flex items-center space-x-4 justify-end">
+                <button
+                  onClick={() => setConfirmationOpen(false)}
+                  className="px-4 py-2 text-gray-700 bg-gray-200 rounded-lg hover:bg-gray-300 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleDeassign}
+                  className="px-4 py-2 text-white bg-red-600 rounded-lg hover:bg-red-700 transition-colors"
+                >
+                  Deassign Helmet
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+====== FILE: ./app/helmet/page.tsx ======
+
+ 'use client';
+
+import React, { useState } from 'react';
+import Header from '@/components/common/Header';
+import Sidebar from '@/components/common/Sidebar';
+import Card from '@/components/common/Card';
+import Image from 'next/image';
+import { Search, Filter, Plus, CheckCircle, UserPlus, UserMinus } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+
+// Helmet Status Chart Component - Completely Redesigned
+const HelmetStatusChart = () => {
+  // Helmet statistics
+  const stats = {
+    total: 100,
+    active: 50,
+    inactive: 35,
+    issue: 15
+  };
+  
+  const CIRCUMFERENCE = 2 * Math.PI * 13.9155;
+  
+  const percentToStroke = (percent) => (percent / 100) * CIRCUMFERENCE;
+  
+  const activeLength = percentToStroke(stats.active);
+  const inactiveLength = percentToStroke(stats.inactive);
+  const issueLength = percentToStroke(stats.issue);
+  
+  return (
+    <div className="flex flex-col items-center">
+      <div className="relative w-[26rem] h-[26rem]">
+        {/* SVG Donut Chart */}
+        <svg width="100%" height="100%" viewBox="0 0 42 42" className="transform -rotate-90">
+          {/* Background circle */}
+          <circle cx="21" cy="21" r="13.9155" fill="none" stroke="#ece8ff" strokeWidth="10" />
+          
+          {/* Active segment */}
+          <circle
+            cx="21"
+            cy="21"
+            r="13.9155"
+            fill="none"
+            stroke="#5d45db"
+            strokeWidth="10"
+            strokeDasharray={`${activeLength} ${CIRCUMFERENCE - activeLength}`}
+            strokeDashoffset="0"
+          />
+          
+          {/* Inactive segment */}
+          <circle
+            cx="21"
+            cy="21"
+            r="13.9155"
+            fill="none"
+            stroke="#a698eb"
+            strokeWidth="10"
+            strokeDasharray={`${inactiveLength} ${CIRCUMFERENCE - inactiveLength}`}
+            strokeDashoffset={`-${activeLength}`}
+          />
+          
+          {/* Issue segment */}
+          <circle
+            cx="21"
+            cy="21"
+            r="13.9155"
+            fill="none"
+            stroke="#7a65e2"
+            strokeWidth="10"
+            strokeDasharray={`${issueLength} ${CIRCUMFERENCE - issueLength}`}
+            strokeDashoffset={`-${activeLength + inactiveLength}`}
+          />
+        </svg>
+
+        {/* Center helmet icon */}
+        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
+          <div className="bg-white p-4 rounded-full shadow-lg">
+            <Image src="/images/img_vector.svg" alt="Helmet Icon" width={90} height={90} />
+          </div>
+        </div>
+
+        {/* Total count in center */}
+        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 translate-y-16 text-center">
+          <p className="text-gray-600 font-medium text-lg">Total Helmets</p>
+          <p className="text-3xl font-bold text-purple-700">{stats.total}</p>
+        </div>
+
+        {/* Issue Label - Top */}
+        <div className="absolute top-4 left-1/2 transform -translate-x-1/2 text-center group cursor-pointer">
+          <p className="text-gray-600 font-semibold text-lg group-hover:text-purple-700 transition-colors">Issue</p>
+          <div className="bg-gray-100 text-purple-700 px-4 py-2 rounded-lg mt-2 shadow-sm group-hover:shadow-md transition-all group-hover:-translate-y-1">
+            <span className="text-xl font-bold">{stats.issue}</span>
+          </div>
+        </div>
+
+        {/* Active Label - Bottom Right */}
+        <div className="absolute bottom-8 right-4 text-center group cursor-pointer">
+          <p className="text-gray-600 font-semibold text-lg group-hover:text-purple-700 transition-colors">Active</p>
+          <div className="bg-gray-100 text-purple-700 px-4 py-2 rounded-lg mt-2 shadow-sm group-hover:shadow-md transition-all group-hover:-translate-y-1">
+            <span className="text-xl font-bold">{stats.active}</span>
+          </div>
+        </div>
+
+        {/* Inactive Label - Bottom Left */}
+        <div className="absolute bottom-8 left-4 text-center group cursor-pointer">
+          <p className="text-gray-600 font-semibold text-lg group-hover:text-purple-700 transition-colors">Inactive</p>
+          <div className="bg-gray-100 text-purple-700 px-4 py-2 rounded-lg mt-2 shadow-sm group-hover:shadow-md transition-all group-hover:-translate-y-1">
+            <span className="text-xl font-bold">{stats.inactive}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default function HelmetAssignment() {
+  const router = useRouter();
+  const [searchTerm, setSearchTerm] = useState('');
+  const [workerSearchTerm, setWorkerSearchTerm] = useState('');
+  const [assignmentSuccess, setAssignmentSuccess] = useState(false);
+  const [activeButton, setActiveButton] = useState(null);
+
+  // Sample data for helmets and workers
+  const helmets = [
+    { id: 'HLM-001', status: 'Available', battery: '92%', lastUsed: '2025-05-15', condition: 'Excellent' },
+    { id: 'HLM-002', status: 'Active', battery: '78%', lastUsed: '2025-05-18', condition: 'Good' },
+    { id: 'HLM-003', status: 'Maintenance', battery: '45%', lastUsed: '2025-05-10', condition: 'Needs Repair' },
+    { id: 'HLM-004', status: 'Active', battery: '100%', lastUsed: '2025-05-12', condition: 'Excellent' },
+  ];
+
+  const workers = [
+    { id: 'W-001', name: 'John Doe', role: 'Excavator', department: 'Construction', helmetAssigned: 'None' },
+    { id: 'W-002', name: 'Jane Smith', role: 'Supervisor', department: 'Management', helmetAssigned: 'HLM-002' },
+    { id: 'W-003', name: 'Mike Brown', role: 'Electrician', department: 'Electrical', helmetAssigned: 'None' },
+    { id: 'W-004', name: 'Sarah Wilson', role: 'Safety Officer', department: 'Safety', helmetAssigned: 'None' },
+  ];
+
+  const handleAssignHelmet = () => {
+    setActiveButton('assign');
+    setTimeout(() => {
+      router.push('/helmet/assign-helmet');
+      setActiveButton(null);
+    }, 300);
+  };
+
+  const handleDeassignHelmet = () => {
+    setActiveButton('deassign');
+    setTimeout(() => {
+      router.push('/helmet/deassign-helmet');
+      setActiveButton(null);
+    }, 300);
+  };
+
+  const handleShowSuccess = () => {
+    setAssignmentSuccess(true);
+    setTimeout(() => setAssignmentSuccess(false), 3000);
+  };
+
+  return (      
+        <div className="flex-1 overflow-y-auto p-0">
+          {assignmentSuccess && (
+            <div className="mb-6 flex items-center p-4 bg-green-100 text-green-700 rounded-lg shadow-md">
+              <CheckCircle className="mr-3" size={24} />
+              <span className="text-lg font-medium">Helmet successfully assigned!</span>
+            </div>
+          )}
+
+          <div className="flex items-center justify-between mb-8">
+            <h1 className="text-3xl font-bold text-[#05004e]">Helmet Management</h1>
+          </div>
+
+          {/* Helmet Status Overview Card */}
+          <Card className="p-8 mb-8">
+            <h2 className="text-2xl font-semibold mb-6 text-center text-[#05004e]">Helmet Status Overview</h2>
+            <HelmetStatusChart />
+            
+            {/* Action Buttons */}
+            <div className="mt-10 flex justify-center items-center gap-6">
+              <button
+                onClick={handleAssignHelmet}
+                className={`flex items-center justify-center px-6 py-3 rounded-lg transition-all duration-300 text-lg font-medium shadow-md
+                ${activeButton === 'assign' 
+                  ? 'bg-purple-700 text-white translate-y-1 shadow-inner' 
+                  : 'bg-purple-600 text-white hover:bg-purple-700 hover:-translate-y-1 hover:shadow-lg'}`}
+              >
+                <UserPlus className="mr-3" size={24} />
+                Assign Helmet
+              </button>
+              <button
+                onClick={handleDeassignHelmet}
+                className={`flex items-center justify-center px-6 py-3 rounded-lg transition-all duration-300 text-lg font-medium shadow-md
+                ${activeButton === 'deassign' 
+                  ? 'bg-gray-700 text-white translate-y-1 shadow-inner' 
+                  : 'bg-gray-600 text-white hover:bg-gray-700 hover:-translate-y-1 hover:shadow-lg'}`}
+              >
+                <UserMinus className="mr-3" size={24} />
+                Deassign Helmet
+              </button>
+            </div>
+          </Card>
+
+          {/* Available Helmets Table Card */}
+          <Card className="mb-8">
+            <div className="flex justify-between items-center p-6 border-b border-gray-200">
+              <h2 className="text-2xl font-semibold text-[#05004e]">Available Helmets</h2>
+              <div className="flex items-center gap-3">
+                <div className="relative">
+                  <input
+                    type="text"
+                    placeholder="Search helmets..."
+                    className="pl-10 pr-4 py-2.5 w-64 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                  />
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
+                </div>
+                <button className="p-2.5 border border-gray-300 rounded-lg hover:bg-gray-100 transition-colors">
+                  <Filter size={20} className="text-gray-500" />
+                </button>
+              </div>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead>
+                  <tr className="bg-gray-50">
+                    <th scope="col" className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Helmet ID</th>
+                    <th scope="col" className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Status</th>
+                    <th scope="col" className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Battery</th>
+                    <th scope="col" className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Last Used</th>
+                    <th scope="col" className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Condition</th>
+                    <th scope="col" className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {helmets.map((helmet) => (
+                    <tr key={helmet.id} className="hover:bg-gray-50 transition-colors">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{helmet.id}</td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className={`px-3 py-1.5 text-xs font-semibold rounded-full ${
+                          helmet.status === 'Available' ? 'bg-green-100 text-green-800' :
+                          helmet.status === 'Active' ? 'bg-blue-100 text-blue-800' :
+                          'bg-yellow-100 text-yellow-800' // For Maintenance
+                        }`}>
+                          {helmet.status}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{helmet.battery}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{helmet.lastUsed}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{helmet.condition}</td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <button 
+                          onClick={handleShowSuccess}
+                          className="text-purple-600 hover:text-purple-800 hover:underline font-medium transition-colors"
+                        >
+                          Assign
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </Card>
+
+          {/* Workers Table Card */}
+          <Card className="mb-8">
+            <div className="flex justify-between items-center p-6 border-b border-gray-200">
+              <h2 className="text-2xl font-semibold text-[#05004e]">Workers</h2>
+              <div className="flex items-center gap-3">
+                <div className="relative">
+                  <input
+                    type="text"
+                    placeholder="Search workers..."
+                    className="pl-10 pr-4 py-2.5 w-64 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all"
+                    value={workerSearchTerm}
+                    onChange={(e) => setWorkerSearchTerm(e.target.value)}
+                  />
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
+                </div>
+                <button className="p-2.5 border border-gray-300 rounded-lg hover:bg-gray-100 transition-colors">
+                  <Filter size={20} className="text-gray-500" />
+                </button>
+                <button className="flex items-center px-4 py-2.5 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-all hover:-translate-y-0.5 shadow-md hover:shadow-lg">
+                  <Plus size={20} className="mr-2" />
+                  Add Worker
+                </button>
+              </div>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead>
+                  <tr className="bg-gray-50">
+                    <th scope="col" className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">ID</th>
+                    <th scope="col" className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Name</th>
+                    <th scope="col" className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Role</th>
+                    <th scope="col" className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Department</th>
+                    <th scope="col" className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Helmet Assigned</th>
+                    <th scope="col" className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {workers.map((worker) => (
+                    <tr key={worker.id} className="hover:bg-gray-50 transition-colors">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{worker.id}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{worker.name}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{worker.role}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{worker.department}</td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        {worker.helmetAssigned !== 'None' ? (
+                          <span className="px-3 py-1.5 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
+                            {worker.helmetAssigned}
+                          </span>
+                        ) : (
+                          <span className="px-3 py-1.5 text-xs font-semibold rounded-full bg-gray-100 text-gray-700">
+                            None
+                          </span>
+                        )}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        {worker.helmetAssigned !== 'None' ? (
+                          <button 
+                            onClick={handleShowSuccess}
+                            className="text-red-600 hover:text-red-800 hover:underline font-medium transition-colors"
+                          >
+                            Deassign
+                          </button>
+                        ) : (
+                          <button 
+                            onClick={handleShowSuccess}
+                            className="text-purple-600 hover:text-purple-800 hover:underline font-medium transition-colors"
+                          >
+                            Assign
+                          </button>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </Card>
+
+          {/* Assignment History Table Card */}
+          <Card className="mb-6">
+            <div className="p-6 border-b border-gray-200">
+              <h2 className="text-2xl font-semibold text-[#05004e]">Assignment History</h2>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead>
+                  <tr className="bg-gray-50">
+                    <th scope="col" className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Date</th>
+                    <th scope="col" className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Helmet ID</th>
+                    <th scope="col" className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Worker</th>
+                    <th scope="col" className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Project</th>
+                    <th scope="col" className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Status</th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  <tr className="hover:bg-gray-50 transition-colors">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">2025-05-15</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">HLM-001</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">John Doe</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">Project_ID_A1</td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className="px-3 py-1.5 text-xs font-semibold rounded-full bg-green-100 text-green-800">
+                        Returned
+                      </span>
+                    </td>
+                  </tr>
+                  <tr className="hover:bg-gray-50 transition-colors">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">2025-05-18</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">HLM-002</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">Jane Smith</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">Project_ID_B2</td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className="px-3 py-1.5 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
+                        Assigned
+                      </span>
+                    </td>
+                  </tr>
+                  <tr className="hover:bg-gray-50 transition-colors">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">2025-05-10</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">HLM-003</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">Mike Brown</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">Project_ID_C3</td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className="px-3 py-1.5 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-800">
+                        Maintenance
+                      </span>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </Card>
+        </div>
+  );
+}
+
+====== FILE: ./app/drawing/page.tsx ======
+
+'use client';
+
+import React, { useState } from 'react';
+import Header from '@/components/common/Header';
+import Sidebar from '@/components/common/Sidebar';
+import Card from '@/components/common/Card';
+import Image from 'next/image';
+import Link from 'next/link';
+import { Search, Download, Eye, CalendarDays, FileText, Users } from 'lucide-react';
+
+export default function DrawingBills() {
+  const [activeTab, setActiveTab] = useState('drawings');
+  
+  // Sample project data
+  const currentProject = {
+    id: 'Project_ID_A1',
+    title: 'Commercial Tower Construction',
+    status: 'Active',
+    image: '/images/project_thumbnail.jpg',
+    description: 'A 30-story commercial tower with modern amenities and sustainable design features.',
+    location: 'Downtown Metro Area',
+    startDate: '2024-02-15',
+    endDate: '2025-11-20',
+    completion: 45
+  };
+
+  // Sample projects for the table
+  const projects = [
+    {
+      id: 'Project_ID_A1',
+      title: 'Commercial Tower Construction',
+      location: 'Downtown Metro Area',
+      startDate: '2024-02-15',
+      documentsCount: 24,
+      billsCount: 12
+    },
+    {
+      id: 'Project_ID_B2',
+      title: 'Residential Complex Phase II',
+      location: 'Riverside District',
+      startDate: '2024-03-22',
+      documentsCount: 18,
+      billsCount: 8
+    },
+    {
+      id: 'Project_ID_C3',
+      title: 'Highway Extension Project',
+      location: 'North County',
+      startDate: '2024-01-10',
+      documentsCount: 32,
+      billsCount: 15
+    },
+    {
+      id: 'Project_ID_D4',
+      title: 'Public Library Renovation',
+      location: 'City Center',
+      startDate: '2024-04-05',
+      documentsCount: 14,
+      billsCount: 6
+    }
+  ];
+
+  // Sample documents for the current project
+  const projectDocuments = [
+    {
+      id: 'DOC001',
+      type: 'drawing',
+      title: 'Foundation Blueprint',
+      category: 'Structural',
+      dateAdded: '2024-02-20',
+      addedBy: 'John Architect',
+      size: '4.2 MB',
+      thumbnail: '/images/blueprint_thumbnail.jpg'
+    },
+    {
+      id: 'DOC002',
+      type: 'drawing',
+      title: 'Electrical Layout - Floor 1-10',
+      category: 'Electrical',
+      dateAdded: '2024-02-25',
+      addedBy: 'Sarah Engineer',
+      size: '3.8 MB',
+      thumbnail: '/images/electrical_thumbnail.jpg'
+    },
+    {
+      id: 'DOC003',
+      type: 'bill',
+      title: 'Concrete Supply Invoice',
+      category: 'Materials',
+      dateAdded: '2024-03-05',
+      addedBy: 'Mike Procurement',
+      size: '1.2 MB',
+      thumbnail: '/images/invoice_thumbnail.jpg'
+    },
+    {
+      id: 'DOC004',
+      type: 'bill',
+      title: 'Equipment Rental March 2024',
+      category: 'Equipment',
+      dateAdded: '2024-03-15',
+      addedBy: 'Lisa Manager',
+      size: '0.9 MB',
+      thumbnail: '/images/invoice_thumbnail.jpg'
+    }
+  ];
+
+  // Filter documents based on active tab
+  const filteredDocuments = projectDocuments.filter(doc => 
+    activeTab === 'all' || doc.type === activeTab
+  );
+
+  return (      
+        <div className="flex-1 overflow-y-auto p-8">
+          <div className="flex justify-between items-center mb-6">
+            <h1 className="text-2xl font-semibold text-[#05004e]">Drawing & Bills</h1>
+            <div className="relative">
+              <input
+                type="text"
+                placeholder="Search documents..."
+                className="pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
+            </div>
+          </div>
+          
+          {/* Main Project Card with Image */}
+          <Card className="p-6 mb-8">
+            <div className="flex flex-col lg:flex-row gap-6">
+              {/* Project Image */}
+              <div className="w-full lg:w-1/3 relative h-64 rounded-lg overflow-hidden">
+                <Image 
+                  src={currentProject.image} 
+                  alt={currentProject.title}
+                  fill
+                  className="rounded-lg object-cover"
+                />
+                
+                <div className="absolute top-4 right-4 bg-white bg-opacity-90 px-3 py-1 rounded-full flex items-center">
+                  <span className="w-2 h-2 rounded-full bg-green-500 mr-2"></span>
+                  <span className="text-sm font-medium">{currentProject.status}</span>
+                </div>
+              </div>
+              
+              {/* Project Details */}
+              <div className="w-full lg:w-2/3">
+                <div className="flex justify-between mb-4">
+                  <div>
+                    <h2 className="text-xl font-semibold text-[#05004e]">{currentProject.title}</h2>
+                    <p className="text-sm text-gray-500">Project ID: {currentProject.id}</p>
+                  </div>
+                  <div className="flex items-center">
+                    <div className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full flex items-center">
+                      <span className="text-sm font-medium">{currentProject.completion}% Complete</span>
+                    </div>
+                  </div>
+                </div>
+                
+                <p className="text-gray-600 mb-4">{currentProject.description}</p>
+                
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                  <div className="flex items-center">
+                    <CalendarDays size={16} className="text-gray-400 mr-2" />
+                    <div>
+                      <p className="text-xs text-gray-500">Start Date</p>
+                      <p className="text-sm font-medium">{new Date(currentProject.startDate).toLocaleDateString()}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center">
+                    <CalendarDays size={16} className="text-gray-400 mr-2" />
+                    <div>
+                      <p className="text-xs text-gray-500">End Date</p>
+                      <p className="text-sm font-medium">{new Date(currentProject.endDate).toLocaleDateString()}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center">
+                    <FileText size={16} className="text-gray-400 mr-2" />
+                    <div>
+                      <p className="text-xs text-gray-500">Documents</p>
+                      <p className="text-sm font-medium">{projectDocuments.length} Files</p>
+                    </div>
+                  </div>
+                </div>
+                
+                {/* Document Type Tabs */}
+                <div className="flex space-x-4 border-b">
+                  <button
+                    className={`pb-2 px-1 text-sm font-medium ${
+                      activeTab === 'all' 
+                      ? 'text-blue-600 border-b-2 border-blue-600' 
+                      : 'text-gray-500 hover:text-gray-700'
+                    }`}
+                    onClick={() => setActiveTab('all')}
+                  >
+                    All Documents
+                  </button>
+                  <button
+                    className={`pb-2 px-1 text-sm font-medium ${
+                      activeTab === 'drawing' 
+                      ? 'text-blue-600 border-b-2 border-blue-600' 
+                      : 'text-gray-500 hover:text-gray-700'
+                    }`}
+                    onClick={() => setActiveTab('drawing')}
+                  >
+                    Drawings
+                  </button>
+                  <button
+                    className={`pb-2 px-1 text-sm font-medium ${
+                      activeTab === 'bill' 
+                      ? 'text-blue-600 border-b-2 border-blue-600' 
+                      : 'text-gray-500 hover:text-gray-700'
+                    }`}
+                    onClick={() => setActiveTab('bill')}
+                  >
+                    Bills
+                  </button>
+                </div>
+              </div>
+            </div>
+            
+            {/* Documents Grid */}
+            <div className="mt-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                {filteredDocuments.map(doc => (
+                  <div key={doc.id} className="bg-white border border-gray-100 rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+                    <div className="relative h-40 bg-gray-100">
+                      <Image 
+                        src={doc.thumbnail} 
+                        alt={doc.title}
+                        fill
+                        className="object-cover"
+                      />
+                      <div className="absolute top-2 right-2 bg-white bg-opacity-90 px-2 py-1 rounded text-xs font-medium">
+                        {doc.category}
+                      </div>
+                    </div>
+                    <div className="p-3">
+                      <h3 className="font-medium text-sm text-gray-800 mb-1">{doc.title}</h3>
+                      <p className="text-xs text-gray-500 mb-2">Added on {new Date(doc.dateAdded).toLocaleDateString()}</p>
+                      <div className="flex justify-between items-center">
+                        <span className="text-xs text-gray-500">{doc.size}</span>
+                        <div className="flex space-x-2">
+                          <button className="p-1 rounded-full hover:bg-gray-100">
+                            <Eye size={16} className="text-gray-500" />
+                          </button>
+                          <button className="p-1 rounded-full hover:bg-gray-100">
+                            <Download size={16} className="text-gray-500" />
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </Card>
+          
+          {/* Projects Table */}
+          <Card className="p-6">
+            <div className="mb-4">
+              <h2 className="text-lg font-semibold text-[#05004e]">All Projects</h2>
+              <p className="text-sm text-gray-500">View drawings and bills for all projects</p>
+            </div>
+            
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="bg-gray-50">
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Project ID</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Project Name</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Location</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Start Date</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Drawings</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Bills</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-200">
+                  {projects.map((project) => (
+                    <tr key={project.id} className="hover:bg-gray-50">
+                      <td className="px-4 py-4 text-sm text-gray-500">{project.id}</td>
+                      <td className="px-4 py-4">
+                        <div className="text-sm font-medium text-gray-900">{project.title}</div>
+                      </td>
+                      <td className="px-4 py-4 text-sm text-gray-500">{project.location}</td>
+                      <td className="px-4 py-4 text-sm text-gray-500">{new Date(project.startDate).toLocaleDateString()}</td>
+                      <td className="px-4 py-4 text-sm text-gray-500">{project.documentsCount}</td>
+                      <td className="px-4 py-4 text-sm text-gray-500">{project.billsCount}</td>
+                      <td className="px-4 py-4 text-sm text-gray-500">
+                        <Link 
+                          href={`/drawing/${project.id}`}
+                          className="bg-blue-50 hover:bg-blue-100 text-blue-700 font-medium py-1 px-3 rounded-md text-xs transition-colors"
+                        >
+                          View Documents
+                        </Link>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </Card>
+        </div>
+
+  );
+}
+
+====== FILE: ./app/projects/add_project/page.tsx ======
+
+'use client';
+
+import React, { useState } from 'react';
+import Image from 'next/image';
+import Sidebar from '@/components/common/Sidebar';
+import Header from '@/components/common/Header';
+
+const AddProjectPage = () => {
+  // Mock router for navigation
+  const handleNavigation = (path) => {
+    console.log(`Navigating to: ${path}`);
+    // In a real app, this would use router.push(path)
+  };
+  
+  // State for form data
+  const [formData, setFormData] = useState({
+    projectName: '',
+    projectId: `PRJ-${Math.floor(1000 + Math.random() * 9000)}`, // Auto-generated ID
+    clientName: '',
+    address: '',
+    googleMapsLink: '',
+    startDate: '',
+    endDate: '',
+    projectStatus: 'Ongoing',
+    projectType: 'Commercial',
+    projectDescription: '',
+    teamsInvolved: [],
+    totalBudget: '',
+    completionPercentage: 0,
+    workers: []
+  });
+  
+  // State for file uploads
+  const [blueprints, setBlueprints] = useState([]);
+  const [bills, setBills] = useState([]);
+  
+  // State for worker input
+  const [workerInput, setWorkerInput] = useState({
+    name: '',
+    role: '',
+    helmetId: '',
+    contact: ''
+  });
+  
+  // Available teams for multi-select
+  const availableTeams = [
+    'Electrical', 'Plumbing', 'Civil', 'Carpentry', 
+    'HVAC', 'Finishing', 'Safety', 'Planning', 'Management'
+  ];
+  
+  // Handle form input changes
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData({
+      ...formData,
+      [name]: value
+    });
+  };
+  
+  // Handle teams selection
+  const handleTeamToggle = (team) => {
+    setFormData(prev => {
+      if (prev.teamsInvolved.includes(team)) {
+        return {
+          ...prev,
+          teamsInvolved: prev.teamsInvolved.filter(t => t !== team)
+        };
+      } else {
+        return {
+          ...prev,
+          teamsInvolved: [...prev.teamsInvolved, team]
+        };
+      }
+    });
+  };
+  
+  // Handle blueprint file uploads
+  const handleBlueprintUpload = (e) => {
+    const files = Array.from(e.target.files);
+    setBlueprints(prev => [...prev, ...files]);
+  };
+  
+  // Handle bill file uploads
+  const handleBillUpload = (e) => {
+    const files = Array.from(e.target.files);
+    setBills(prev => [...prev, ...files]);
+  };
+  
+  // Handle worker input changes
+  const handleWorkerInputChange = (e) => {
+    const { name, value } = e.target;
+    setWorkerInput({
+      ...workerInput,
+      [name]: value
+    });
+  };
+  
+  // Add worker to project
+  const addWorker = () => {
+    if (workerInput.name && workerInput.role) {
+      setFormData({
+        ...formData,
+        workers: [...formData.workers, { ...workerInput, id: Date.now() }]
+      });
+      setWorkerInput({
+        name: '',
+        role: '',
+        helmetId: '',
+        contact: ''
+      });
+    }
+  };
+  
+  // Remove worker from project
+  const removeWorker = (workerId) => {
+    setFormData({
+      ...formData,
+      workers: formData.workers.filter(worker => worker.id !== workerId)
+    });
+  };
+  
+  // Remove uploaded file
+  const removeFile = (fileIndex, fileType) => {
+    if (fileType === 'blueprint') {
+      setBlueprints(blueprints.filter((_, index) => index !== fileIndex));
+    } else if (fileType === 'bill') {
+      setBills(bills.filter((_, index) => index !== fileIndex));
+    }
+  };
+  
+  // Handle form submission
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    
+    // Here you would typically send the data to your API
+    console.log('Form submitted:', { 
+      ...formData, 
+      blueprints: blueprints.map(file => file.name),
+      bills: bills.map(file => file.name)
+    });
+    
+    // Navigate back to projects page
+    router.push('/projects');
+  };
+  
+  return (
+        <div className="flex-1 overflow-y-auto p-0">
+          {/* Page Header */}
+          <div className="flex items-center mb-8">
+            <button 
+              onClick={() => router.push('/projects')}
+              className="mr-4 p-2 rounded-full hover:bg-gray-100"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-gray-600">
+                <path d="M19 12H5M12 19l-7-7 7-7"/>
+              </svg>
+            </button>
+            <h1 className="text-2xl font-bold text-[#05004e]">Add New Project</h1>
+          </div>
+          
+          {/* Form Card */}
+          <div className="bg-white rounded-xl p-6 shadow-sm mb-8">
+            <form onSubmit={handleSubmit}>
+              {/* Basic Information Section */}
+              <div className="mb-8">
+                <h2 className="text-lg font-semibold mb-4 text-[#05004e] border-b pb-2">Project Information</h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <label className="block text-sm font-medium text-[#737791] mb-1">
+                      Project Name*
+                    </label>
+                    <input
+                      type="text"
+                      name="projectName"
+                      value={formData.projectName}
+                      onChange={handleInputChange}
+                      className="w-full p-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                      required
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-[#737791] mb-1">
+                      Project ID
+                    </label>
+                    <input
+                      type="text"
+                      name="projectId"
+                      value={formData.projectId}
+                      onChange={handleInputChange}
+                      className="w-full p-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary bg-gray-50"
+                      placeholder="Auto-generated"
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-[#737791] mb-1">
+                      Client Name*
+                    </label>
+                    <input
+                      type="text"
+                      name="clientName"
+                      value={formData.clientName}
+                      onChange={handleInputChange}
+                      className="w-full p-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                      required
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-[#737791] mb-1">
+                      Total Budget*
+                    </label>
+                    <input
+                      type="text"
+                      name="totalBudget"
+                      value={formData.totalBudget}
+                      onChange={handleInputChange}
+                      className="w-full p-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                      placeholder="$"
+                      required
+                    />
+                  </div>
+                </div>
+              </div>
+              
+              {/* Location Section */}
+              <div className="mb-8">
+                <h2 className="text-lg font-semibold mb-4 text-[#05004e] border-b pb-2">Location Details</h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="md:col-span-2">
+                    <label className="block text-sm font-medium text-[#737791] mb-1">
+                      Site Address*
+                    </label>
+                    <input
+                      type="text"
+                      name="address"
+                      value={formData.address}
+                      onChange={handleInputChange}
+                      className="w-full p-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                      required
+                    />
+                  </div>
+                  
+                  <div className="md:col-span-2">
+                    <label className="block text-sm font-medium text-[#737791] mb-1">
+                      Google Maps Link
+                    </label>
+                    <input
+                      type="url"
+                      name="googleMapsLink"
+                      value={formData.googleMapsLink}
+                      onChange={handleInputChange}
+                      className="w-full p-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                      placeholder="https://maps.google.com/..."
+                    />
+                  </div>
+                </div>
+              </div>
+              
+              {/* Schedule and Status Section */}
+              <div className="mb-8">
+                <h2 className="text-lg font-semibold mb-4 text-[#05004e] border-b pb-2">Schedule & Status</h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <label className="block text-sm font-medium text-[#737791] mb-1">
+                      Start Date*
+                    </label>
+                    <input
+                      type="date"
+                      name="startDate"
+                      value={formData.startDate}
+                      onChange={handleInputChange}
+                      className="w-full p-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                      required
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-[#737791] mb-1">
+                      Expected Completion Date*
+                    </label>
+                    <input
+                      type="date"
+                      name="endDate"
+                      value={formData.endDate}
+                      onChange={handleInputChange}
+                      className="w-full p-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                      required
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-[#737791] mb-1">
+                      Project Status
+                    </label>
+                    <select
+                      name="projectStatus"
+                      value={formData.projectStatus}
+                      onChange={handleInputChange}
+                      className="w-full p-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                    >
+                      <option value="Ongoing">Ongoing</option>
+                      <option value="Completed">Completed</option>
+                      <option value="Delayed">Delayed</option>
+                      <option value="On Hold">On Hold</option>
+                      <option value="Cancelled">Cancelled</option>
+                    </select>
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-[#737791] mb-1">
+                      Project Type
+                    </label>
+                    <select
+                      name="projectType"
+                      value={formData.projectType}
+                      onChange={handleInputChange}
+                      className="w-full p-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                    >
+                      <option value="Residential">Residential</option>
+                      <option value="Commercial">Commercial</option>
+                      <option value="Infrastructure">Infrastructure</option>
+                      <option value="Industrial">Industrial</option>
+                      <option value="Institutional">Institutional</option>
+                      <option value="Mixed Use">Mixed Use</option>
+                    </select>
+                  </div>
+                  
+                  <div className="md:col-span-2">
+                    <label className="block text-sm font-medium text-[#737791] mb-1">
+                      Completion Percentage
+                    </label>
+                    <div className="flex items-center">
+                      <input
+                        type="range"
+                        name="completionPercentage"
+                        value={formData.completionPercentage}
+                        onChange={handleInputChange}
+                        min="0"
+                        max="100"
+                        step="1"
+                        className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+                      />
+                      <span className="ml-4 text-[#05004e] font-medium">{formData.completionPercentage}%</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              {/* Teams Section */}
+              <div className="mb-8">
+                <h2 className="text-lg font-semibold mb-4 text-[#05004e] border-b pb-2">Teams Involved</h2>
+                <div className="flex flex-wrap gap-3">
+                  {availableTeams.map(team => (
+                    <div 
+                      key={team}
+                      onClick={() => handleTeamToggle(team)}
+                      className={`px-4 py-2 rounded-full text-sm cursor-pointer ${
+                        formData.teamsInvolved.includes(team) 
+                          ? 'bg-primary text-white' 
+                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                      }`}
+                    >
+                      {team}
+                    </div>
+                  ))}
+                  <div className="px-4 py-2 rounded-full text-sm bg-gray-100 text-gray-700 cursor-pointer hover:bg-gray-200">
+                    + Add Custom
+                  </div>
+                </div>
+              </div>
+              
+              {/* Description Section */}
+              <div className="mb-8">
+                <h2 className="text-lg font-semibold mb-4 text-[#05004e] border-b pb-2">Project Description</h2>
+                <textarea
+                  name="projectDescription"
+                  value={formData.projectDescription}
+                  onChange={handleInputChange}
+                  rows={4}
+                  className="w-full p-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                  placeholder="Provide an overview of the project..."
+                ></textarea>
+              </div>
+              
+              {/* Document Uploads Section */}
+              <div className="mb-8">
+                <h2 className="text-lg font-semibold mb-4 text-[#05004e] border-b pb-2">Documents</h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                  {/* Blueprints Upload */}
+                  <div>
+                    <label className="block text-sm font-medium text-[#737791] mb-2">
+                      Upload Blueprints / Drawings
+                    </label>
+                    <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center">
+                      <input
+                        type="file"
+                        id="blueprints"
+                        onChange={handleBlueprintUpload}
+                        className="hidden"
+                        multiple
+                        accept=".pdf,.dwg,.png,.jpg,.jpeg"
+                      />
+                      <label htmlFor="blueprints" className="cursor-pointer">
+                        <div className="flex flex-col items-center justify-center py-4">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-gray-400 mb-2">
+                            <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"></path>
+                            <polyline points="17 8 12 3 7 8"></polyline>
+                            <line x1="12" y1="3" x2="12" y2="15"></line>
+                          </svg>
+                          <p className="text-sm text-gray-500">
+                            Drag & drop files or <span className="text-primary">browse</span>
+                          </p>
+                          <p className="text-xs text-gray-400 mt-1">
+                            Accepts PDF, DWG, PNG, JPEG
+                          </p>
+                        </div>
+                      </label>
+                    </div>
+                    
+                    {/* Uploaded Blueprints List */}
+                    {blueprints.length > 0 && (
+                      <div className="mt-3">
+                        <p className="text-sm font-medium text-[#737791] mb-2">Uploaded Files:</p>
+                        <div className="space-y-2">
+                          {blueprints.map((file, index) => (
+                            <div key={index} className="flex items-center justify-between bg-gray-50 p-2 rounded-md">
+                              <div className="flex items-center">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-primary mr-2">
+                                  <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"></path>
+                                  <polyline points="14 2 14 8 20 8"></polyline>
+                                </svg>
+                                <span className="text-sm truncate max-w-xs">{file.name}</span>
+                              </div>
+                              <button
+                                type="button"
+                                onClick={() => removeFile(index, 'blueprint')}
+                                className="text-red-500 hover:text-red-700"
+                              >
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                  <line x1="18" y1="6" x2="6" y2="18"></line>
+                                  <line x1="6" y1="6" x2="18" y2="18"></line>
+                                </svg>
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                  
+                  {/* Bills Upload */}
+                  <div>
+                    <label className="block text-sm font-medium text-[#737791] mb-2">
+                      Upload Bills
+                    </label>
+                    <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center">
+                      <input
+                        type="file"
+                        id="bills"
+                        onChange={handleBillUpload}
+                        className="hidden"
+                        multiple
+                        accept=".pdf,.xlsx,.xls,.jpg,.jpeg,.png"
+                      />
+                      <label htmlFor="bills" className="cursor-pointer">
+                        <div className="flex flex-col items-center justify-center py-4">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-gray-400 mb-2">
+                            <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"></path>
+                            <polyline points="17 8 12 3 7 8"></polyline>
+                            <line x1="12" y1="3" x2="12" y2="15"></line>
+                          </svg>
+                          <p className="text-sm text-gray-500">
+                            Drag & drop files or <span className="text-primary">browse</span>
+                          </p>
+                          <p className="text-xs text-gray-400 mt-1">
+                            Accepts PDF, Excel, JPEG, PNG
+                          </p>
+                        </div>
+                      </label>
+                    </div>
+                    
+                    {/* Uploaded Bills List */}
+                    {bills.length > 0 && (
+                      <div className="mt-3">
+                        <p className="text-sm font-medium text-[#737791] mb-2">Uploaded Files:</p>
+                        <div className="space-y-2">
+                          {bills.map((file, index) => (
+                            <div key={index} className="flex items-center justify-between bg-gray-50 p-2 rounded-md">
+                              <div className="flex items-center">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-primary mr-2">
+                                  <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"></path>
+                                  <polyline points="14 2 14 8 20 8"></polyline>
+                                </svg>
+                                <span className="text-sm truncate max-w-xs">{file.name}</span>
+                              </div>
+                              <button
+                                type="button"
+                                onClick={() => removeFile(index, 'bill')}
+                                className="text-red-500 hover:text-red-700"
+                              >
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                  <line x1="18" y1="6" x2="6" y2="18"></line>
+                                  <line x1="6" y1="6" x2="18" y2="18"></line>
+                                </svg>
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+              
+              {/* Workers Section */}
+              <div className="mb-8">
+                <h2 className="text-lg font-semibold mb-4 text-[#05004e] border-b pb-2">
+                  Workers Assignment
+                  <span className="text-sm font-normal text-[#737791] ml-2">
+                    (Total Assigned: {formData.workers.length})
+                  </span>
+                </h2>
+                
+                {/* Worker Input Form */}
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
+                  <div>
+                    <label className="block text-sm font-medium text-[#737791] mb-1">
+                      Worker Name
+                    </label>
+                    <input
+                      type="text"
+                      name="name"
+                      value={workerInput.name}
+                      onChange={handleWorkerInputChange}
+                      className="w-full p-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-[#737791] mb-1">
+                      Role
+                    </label>
+                    <input
+                      type="text"
+                      name="role"
+                      value={workerInput.role}
+                      onChange={handleWorkerInputChange}
+                      className="w-full p-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-[#737791] mb-1">
+                      Helmet ID
+                    </label>
+                    <input
+                      type="text"
+                      name="helmetId"
+                      value={workerInput.helmetId}
+                      onChange={handleWorkerInputChange}
+                      className="w-full p-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-[#737791] mb-1">
+                      Contact
+                    </label>
+                    <div className="flex">
+                      <input
+                        type="text"
+                        name="contact"
+                        value={workerInput.contact}
+                        onChange={handleWorkerInputChange}
+                        className="w-full p-3 border border-gray-200 rounded-l-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                      />
+                      <button
+                        type="button"
+                        onClick={addWorker}
+                        className="bg-primary text-white px-4 rounded-r-lg"
+                      >
+                        Add
+                      </button>
+                    </div>
+                  </div>
+                </div>
+                
+                {/* Workers List */}
+                {formData.workers.length > 0 && (
+                  <div className="bg-gray-50 rounded-lg p-4">
+                    <div className="overflow-x-auto">
+                      <table className="w-full table-auto">
+                        <thead>
+                          <tr className="text-left text-[#737791] border-b">
+                            <th className="pb-3 px-2">Name</th>
+                            <th className="pb-3 px-2">Role</th>
+                            <th className="pb-3 px-2">Helmet ID</th>
+                            <th className="pb-3 px-2">Contact</th>
+                            <th className="pb-3 px-2">Action</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {formData.workers.map((worker) => (
+                            <tr key={worker.id} className="border-b last:border-0">
+                              <td className="py-3 px-2">{worker.name}</td>
+                              <td className="py-3 px-2">{worker.role}</td>
+                              <td className="py-3 px-2">{worker.helmetId || '-'}</td>
+                              <td className="py-3 px-2">{worker.contact || '-'}</td>
+                              <td className="py-3 px-2">
+                                <button
+                                  type="button"
+                                  onClick={() => removeWorker(worker.id)}
+                                  className="text-red-500 hover:text-red-700"
+                                >
+                                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                                  </svg>
+                                </button>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                )}
+              </div>
+              
+              {/* Form Submission Buttons */}
+              <div className="flex justify-end space-x-4">
+                <button
+                  type="button"
+                  onClick={() => router.push('/projects')}
+                  className="px-6 py-3 bg-gray-100 text-gray-700 rounded-lg font-medium hover:bg-gray-200"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-6 py-3 bg-primary text-white rounded-lg font-medium hover:bg-opacity-90"
+                >
+                  Create Project
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+  );
+};
+
+export default AddProjectPage;
+
+====== FILE: ./app/projects/page.tsx ======
+
+'use client';
+
+import React, { useState } from 'react';
+import Link from 'next/link';
+import Image from 'next/image';
+import Sidebar from '@/components/common/Sidebar';
+import Header from '@/components/common/Header';
+import Card from '@/components/common/Card';
+import HelmetStatusChart from '../dashboard/HelmetStatusChart';
+import MetricsSection from '../dashboard/MetricsSection';
+
+const ProjectsPage = () => {
+  // State for active project filter
+  const isActive = true;
+  const [activeFilter, setActiveFilter] = useState('all');
+  
+  // Sample project data
+  const projects = [
+    {
+      id: 'PRJ-001',
+      name: 'Highway Construction Phase 1',
+      site: 'North Bridge',
+      location: 'Los Angeles, CA',
+      budget: '$2.4M',
+      progress: 65,
+      status: 'active'
+    },
+    {
+      id: 'PRJ-002',
+      name: 'Corporate Office Tower',
+      site: 'Downtown Central',
+      location: 'Chicago, IL',
+      budget: '$8.7M',
+      progress: 32,
+      status: 'active'
+    },
+    {
+      id: 'PRJ-003',
+      name: 'Residential Complex',
+      site: 'Riverside Heights',
+      location: 'Miami, FL',
+      budget: '$3.9M',
+      progress: 48,
+      status: 'active'
+    },
+    {
+      id: 'PRJ-004',
+      name: 'Airport Terminal Expansion',
+      site: 'International Airport',
+      location: 'Dallas, TX',
+      budget: '$12.5M',
+      progress: 90,
+      status: 'active'
+    },
+    {
+      id: 'PRJ-005',
+      name: 'Shopping Mall',
+      site: 'West End Plaza',
+      location: 'Seattle, WA',
+      budget: '$6.8M',
+      progress: 100,
+      status: 'completed'
+    },
+    {
+      id: 'PRJ-006',
+      name: 'Power Plant',
+      site: 'Eastern Power Station',
+      location: 'Phoenix, AZ',
+      budget: '$18.2M',
+      progress: 0,
+      status: 'not-started'
+    },
+    {
+      id: 'PRJ-007',
+      name: 'Hospital Wing',
+      site: 'County Hospital',
+      location: 'Denver, CO',
+      budget: '$7.3M',
+      progress: 75,
+      status: 'active'
+    },
+    {
+      id: 'PRJ-008',
+      name: 'Sports Stadium',
+      site: 'City Center Arena',
+      location: 'Atlanta, GA',
+      budget: '$22.1M',
+      progress: 15,
+      status: 'active'
+    }
+  ];
+
+  // Filter projects based on active filter
+  const filteredProjects = activeFilter === 'all' 
+    ? projects 
+    : projects.filter(project => project.status === activeFilter);
+  
+  // Statistics for the metrics section
+  const metrics = [
+    {
+      title: 'Total Projects',
+      value: projects.length,
+      change: '+2',
+      isPositive: true,
+      icon: '/images/img_union_37x37.png'
+    },
+    {
+      title: 'Active Projects',
+      value: projects.filter(p => p.status === 'active').length,
+      change: '+1',
+      isPositive: true,
+      icon: '/images/img_group.svg'
+    },
+    {
+      title: 'Completed',
+      value: projects.filter(p => p.status === 'completed').length,
+      change: '+0',
+      isPositive: true,
+      icon: '/images/img_interface_chartline.svg'
+    },
+    {
+      title: 'Not Started',
+      value: projects.filter(p => p.status === 'not-started').length,
+      change: '+1',
+      isPositive: true,
+      icon: '/images/img_mdicogoutline.svg'
+    }
+  ];
+  
+  // Status color mapping
+  const statusColors = {
+    'active': {
+      bg: '#d1fae5',
+      text: '#065f46',
+      dot: '#10b981'
+    },
+    'completed': {
+      bg: '#dbeafe',
+      text: '#1e40af',
+      dot: '#3b82f6'
+    },
+    'not-started': {
+      bg: '#fee2e2',
+      text: '#991b1b',
+      dot: '#ef4444'
+    }
+  };
+  
+  return (
+        
+        <div className="flex-1 overflow-y-auto p-0">
+          {/* Page Header */}
+          <div className="flex justify-between items-center mb-8">
+            <h1 className="text-2xl font-bold text-[#05004e]">Projects & Sites</h1>
+            <Link href="/projects/add_project" passHref legacyBehavior>
+                <a className="bg-primary text-white py-2 px-4 rounded-lg flex items-center">
+                  <span className="mr-2">+ Add New Project</span>
+                </a>
+            </Link>
+
+          </div>
+
+          <div className="flex-1 overflow-y-auto p-0">
+          <Card className="p-3 mb-6 flex flex-col gap-6 relative">
+            {/* Header inside Card */}
+            <div className="flex justify-between items-start mb-4">
+              {/* Left Side: Separate links for Project ID and Title */}
+              <div className="flex flex-col gap-1">
+                <Link href="/projects/Project_ID_A1" passHref legacyBehavior>
+                  <a
+                    className="text-sm font-semibold text-[#a4a4ad] cursor-pointer transition-transform duration-200 hover:text-blue-600 hover:scale-110 inline-block"
+                    aria-label="Go to Project ID A1"
+                  >
+                    Project_ID_A1
+                  </a>
+                </Link>
+
+                {/* <Link href="/sales/today" passHref legacyBehavior>
+                  <a
+                    className="text-2xl font-semibold text-[#05004e] cursor-pointer transition-transform duration-200 hover:text-blue-600 hover:scale-105 inline-block"
+                    aria-label="Go to Today's Sales"
+                  >
+                    Today's Sales
+                  </a>
+                </Link> */}
+              </div>
+
+              {/* Right Side: Status */}
+              <div
+                className="flex items-center gap-2 px-3 py-1 rounded-full text-sm font-medium"
+                style={{
+                  backgroundColor: isActive ? '#d1fae5' : '#fee2e2',
+                  color: isActive ? '#065f46' : '#991b1b',
+                }}
+              >
+                <span
+                  className="w-2 h-2 rounded-full"
+                  style={{ backgroundColor: isActive ? '#10b981' : '#ef4444' }}
+                />
+                {isActive ? 'Active' : 'Deactive'}
+              </div>
+            </div>
+
+            {/* Card Content */}
+            <div className="flex flex-col lg:flex-row gap-6">
+              <MetricsSection />
+              <HelmetStatusChart />
+            </div>
+          </Card>
+        </div>
+          {/* Metrics Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            {metrics.map((metric, index) => (
+              <div key={index} className="bg-white rounded-xl p-6 shadow-sm flex items-center justify-between">
+                <div>
+                  <p className="text-[#737791] text-sm mb-1">{metric.title}</p>
+                  <h3 className="text-2xl font-bold text-[#05004e]">{metric.value}</h3>
+                  <div className={`text-xs flex items-center ${metric.isPositive ? 'text-green-600' : 'text-red-600'}`}>
+                    <span>{metric.change}</span>
+                    <span className="ml-1">this month</span>
+                  </div>
+                </div>
+                <div className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center">
+                  <Image src={metric.icon} alt={metric.title} width={24} height={24} />
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Projects Table Card */}
+          <div className="bg-white rounded-xl p-6 shadow-sm">
+            {/* Table Header with Filters */}
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
+              <h2 className="text-xl font-semibold text-[#05004e] mb-4 md:mb-0">Project List</h2>
+              <div className="flex space-x-2">
+                <button 
+                  onClick={() => setActiveFilter('all')} 
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                    activeFilter === 'all' ? 'bg-primary text-white' : 'bg-gray-100 text-gray-600'
+                  }`}
+                >
+                  All
+                </button>
+                <button 
+                  onClick={() => setActiveFilter('active')} 
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                    activeFilter === 'active' ? 'bg-primary text-white' : 'bg-gray-100 text-gray-600'
+                  }`}
+                >
+                  Active
+                </button>
+                <button 
+                  onClick={() => setActiveFilter('completed')} 
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                    activeFilter === 'completed' ? 'bg-primary text-white' : 'bg-gray-100 text-gray-600'
+                  }`}
+                >
+                  Completed
+                </button>
+                <button 
+                  onClick={() => setActiveFilter('not-started')} 
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                    activeFilter === 'not-started' ? 'bg-primary text-white' : 'bg-gray-100 text-gray-600'
+                  }`}
+                >
+                  Not Started
+                </button>
+              </div>
+            </div>
+
+            {/* Projects Table */}
+            <div className="overflow-x-auto">
+              <table className="w-full table-auto">
+                <thead>
+                  <tr className="text-left text-[#737791] border-b">
+                    <th className="pb-4 px-2">Project Name</th>
+                    <th className="pb-4 px-2">Project ID</th>
+                    <th className="pb-4 px-2">Site</th>
+                    <th className="pb-4 px-2">Location</th>
+                    <th className="pb-4 px-2">Budget</th>
+                    <th className="pb-4 px-2">Progress</th>
+                    <th className="pb-4 px-2">Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredProjects.map((project, index) => (
+                    <Link key={project.id} href={`/projects/${project.id}`} passHref legacyBehavior>
+                      <tr 
+                        className="border-b last:border-0 cursor-pointer transition-transform hover:translate-y-1 hover:bg-gray-50"
+                      >
+                        <td className="py-4 px-2 font-medium text-[#05004e]">{project.name}</td>
+                        <td className="py-4 px-2 text-[#737791]">{project.id}</td>
+                        <td className="py-4 px-2 text-[#737791]">{project.site}</td>
+                        <td className="py-4 px-2 text-[#737791]">{project.location}</td>
+                        <td className="py-4 px-2 text-[#737791]">{project.budget}</td>
+                        <td className="py-4 px-2">
+                          <div className="flex items-center">
+                            <div className="w-24 bg-gray-200 rounded-full h-2 mr-2">
+                              <div 
+                                className="bg-primary h-2 rounded-full" 
+                                style={{ width: `${project.progress}%` }}
+                              ></div>
+                            </div>
+                            <span className="text-xs text-[#737791]">{project.progress}%</span>
+                          </div>
+                        </td>
+                        <td className="py-4 px-2">
+                          <div 
+                            className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium"
+                            style={{
+                              backgroundColor: statusColors[project.status].bg,
+                              color: statusColors[project.status].text
+                            }}
+                          >
+                            <span 
+                              className="w-2 h-2 rounded-full"
+                              style={{ backgroundColor: statusColors[project.status].dot }}
+                            />
+                            {project.status === 'active' ? 'Active' : 
+                             project.status === 'completed' ? 'Completed' : 'Not Started'}
+                          </div>
+                        </td>
+                      </tr>
+                    </Link>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Pagination */}
+            <div className="flex justify-between items-center mt-6">
+              <div className="text-sm text-[#737791]">
+                Showing <span className="font-medium">1-{filteredProjects.length}</span> of <span className="font-medium">{filteredProjects.length}</span> projects
+              </div>
+              <div className="flex space-x-1">
+                <button className="w-8 h-8 rounded-lg flex items-center justify-center border border-gray-200">
+                  <span className="sr-only">Previous</span>
+                  &lt;
+                </button>
+                <button className="w-8 h-8 rounded-lg flex items-center justify-center bg-primary text-white">
+                  1
+                </button>
+                <button className="w-8 h-8 rounded-lg flex items-center justify-center border border-gray-200">
+                  2
+                </button>
+                <button className="w-8 h-8 rounded-lg flex items-center justify-center border border-gray-200">
+                  <span className="sr-only">Next</span>
+                  &gt;
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+  );
+};
+
+export default ProjectsPage;
+
+====== FILE: ./app/dashboard/HelmetStatusChart.tsx ======
+
+// 'use client';
+
+// import React from 'react';
+// import Image from 'next/image';
+
+// const HelmetStatusChart: React.FC = () => {
+//   // Percentages
+//   const active = 50.0;
+//   const inactive = 35.0;
+//   const issue = 15.0;
+
+//   const CIRCUMFERENCE = 2 * Math.PI * 13.9155; // ≈ 87.45
+
+//   const percentToStroke = (percent: number) => (percent / 100) * CIRCUMFERENCE;
+
+//   const activeLength = percentToStroke(active);
+//   const inactiveLength = percentToStroke(inactive);
+//   const issueLength = percentToStroke(issue);
+
+//   const handleClick = () => {
+//     // Replace this URL with your desired link
+//     window.location.href = "#helmet-status-details";
+//   };
+
+//   return (
+//     <div
+//       onClick={handleClick}
+//       className="flex items-center justify-center cursor-pointer transform transition-transform duration-200 hover:scale-105 hover:shadow-lg"
+//       role="button"
+//       tabIndex={0}
+//       onKeyDown={(e) => { if (e.key === 'Enter') handleClick(); }}
+//       aria-label="Helmet status chart"
+//     >
+//       <div className="relative w-[300px] h-[300px]">
+//         <svg width="300" height="300" viewBox="0 0 42 42" className="transform -rotate-90">
+//           {/* Background ring */}
+//           <circle
+//             cx="21"
+//             cy="21"
+//             r="13.9155"
+//             fill="none"
+//             stroke="#ece8ff"
+//             strokeWidth="10"
+//           />
+
+//           {/* Active */}
+//           <circle
+//             cx="21"
+//             cy="21"
+//             r="13.9155"
+//             fill="none"
+//             stroke="#5d45db"
+//             strokeWidth="10"
+//             strokeDasharray={`${activeLength} ${CIRCUMFERENCE - activeLength}`}
+//             strokeDashoffset="0"
+//           />
+
+//           {/* Inactive */}
+//           <circle
+//             cx="21"
+//             cy="21"
+//             r="13.9155"
+//             fill="none"
+//             stroke="#a698eb"
+//             strokeWidth="10"
+//             strokeDasharray={`${inactiveLength} ${CIRCUMFERENCE - inactiveLength}`}
+//             strokeDashoffset={`-${activeLength}`}
+//           />
+
+//           {/* Issue */}
+//           <circle
+//             cx="21"
+//             cy="21"
+//             r="13.9155"
+//             fill="none"
+//             stroke="#7a65e2"
+//             strokeWidth="10"
+//             strokeDasharray={`${issueLength} ${CIRCUMFERENCE - issueLength}`}
+//             strokeDashoffset={`-${activeLength + inactiveLength}`}
+//           />
+//         </svg>
+
+//         {/* Center Helmet Icon */}
+//         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
+//           <Image src="/images/img_vector.svg" alt="Helmet" width={60} height={50} />
+//         </div>
+
+//         {/* Labels */}
+//         <div className="absolute top-[30px] left-[95px] text-center">
+//           <p className="text-[15px] text-[#ece8ff] font-semibold">Issue</p>
+//           <div className="bg-[#ece8ff] text-[#5d45db] px-2 py-1 rounded mt-1 text-[13px]">
+//             {issue}%
+//           </div>
+//         </div>
+
+//         <div className="absolute top-[120px] left-[225px] text-center">
+//           <p className="text-[15px] text-[#ece8ff] font-semibold">Active</p>
+//           <div className="bg-[#ece8ff] text-[#5d45db] px-2 py-1 rounded mt-1 text-[13px]">
+//             {active}%
+//           </div>
+//         </div>
+
+//         <div className="absolute top-[125px] left-[30px] text-center">
+//           <p className="text-[15px] text-[#ece8ff] font-semibold">Inactive</p>
+//           <div className="bg-[#ece8ff] text-[#5d45db] px-2 py-1 rounded mt-1 text-[13px]">
+//             {inactive}%
+//           </div>
+//         </div>
+//       </div>
+//     </div>
+//   );
+// };
+
+// export default HelmetStatusChart;
+
+
+'use client';
+
+import React from 'react';
+import Image from 'next/image';
+import { useRouter } from 'next/navigation';
+
+const HelmetStatusChart: React.FC = () => {
+  const router = useRouter();
+
+  const active = 50.0;
+  const inactive = 35.0;
+  const issue = 15.0;
+  const CIRCUMFERENCE = 2 * Math.PI * 13.9155;
+
+  const percentToStroke = (percent: number) => (percent / 100) * CIRCUMFERENCE;
+
+  const activeLength = percentToStroke(active);
+  const inactiveLength = percentToStroke(inactive);
+  const issueLength = percentToStroke(issue);
+
+  return (
+    <div className="flex items-center justify-center">
+      <div className="relative w-[300px] h-[300px]">
+        <svg width="300" height="300" viewBox="0 0 42 42" className="transform -rotate-90">
+          <circle cx="21" cy="21" r="13.9155" fill="none" stroke="#ece8ff" strokeWidth="10" />
+          <circle cx="21" cy="21" r="13.9155" fill="none" stroke="#5d45db" strokeWidth="10"
+            strokeDasharray={`${activeLength} ${CIRCUMFERENCE - activeLength}`} strokeDashoffset="0" />
+          <circle cx="21" cy="21" r="13.9155" fill="none" stroke="#a698eb" strokeWidth="10"
+            strokeDasharray={`${inactiveLength} ${CIRCUMFERENCE - inactiveLength}`}
+            strokeDashoffset={`-${activeLength}`} />
+          <circle cx="21" cy="21" r="13.9155" fill="none" stroke="#7a65e2" strokeWidth="10"
+            strokeDasharray={`${issueLength} ${CIRCUMFERENCE - issueLength}`}
+            strokeDashoffset={`-${activeLength + inactiveLength}`} />
+        </svg>
+
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
+          <Image src="/images/img_vector.svg" alt="Helmet" width={60} height={50} />
+        </div>
+
+        {/* Clickable + hover label: Issue */}
+        <div
+          onClick={() => router.push('/helmet')}
+          className="absolute top-[30px] left-[95px] text-center cursor-pointer transition-transform hover:-translate-y-2"
+        >
+          <p className="text-[15px] text-[#ece8ff] font-semibold">Issue</p>
+          <div className="bg-[#ece8ff] text-[#5d45db] px-2 py-1 rounded mt-1 text-[13px]">
+            {issue}%
+          </div>
+        </div>
+
+        {/* Active */}
+        <div
+          onClick={() => router.push('/helmet')}
+          className="absolute top-[120px] left-[225px] text-center cursor-pointer transition-transform hover:-translate-y-2"
+        >
+          <p className="text-[15px] text-[#ece8ff] font-semibold">Active</p>
+          <div className="bg-[#ece8ff] text-[#5d45db] px-2 py-1 rounded mt-1 text-[13px]">
+            {active}%
+          </div>
+        </div>
+
+        {/* Inactive */}
+        <div
+          onClick={() => router.push('/helmet')}
+          className="absolute top-[125px] left-[30px] text-center cursor-pointer transition-transform hover:-translate-y-2"
+        >
+          <p className="text-[15px] text-[#ece8ff] font-semibold">Inactive</p>
+          <div className="bg-[#ece8ff] text-[#5d45db] px-2 py-1 rounded mt-1 text-[13px]">
+            {inactive}%
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default HelmetStatusChart;
+
+
+
+====== FILE: ./app/dashboard/MetricsSection.tsx ======
+
+'use client';
+
+import React from 'react';
+import Image from 'next/image';
+
+interface MetricCardProps {
+  title: string;
+  icon: string;
+  iconBgColor: string;
+  children: React.ReactNode;
+}
+
+const MetricCard: React.FC<MetricCardProps> = ({ title, icon, iconBgColor, children }) => {
+  return (
+    <div className="bg-white rounded-metric p-6 relative">
+      <div className={`absolute top-6 left-6 w-[54px] h-[50px] ${iconBgColor} rounded-full flex items-center justify-center`}>
+        <Image src={icon} alt={title} width={32} height={32} />
+      </div>
+      <h3 className="text-2xl font-semibold text-[#151d48] mt-16 mb-4">{title}</h3>
+      <div className="space-y-2">
+        {children}
+      </div>
+    </div>
+  );
+};
+
+interface MetricItemProps {
+  value: string;
+  label: string;
+  bold?: boolean;
+}
+
+const MetricItem: React.FC<MetricItemProps> = ({ value, label, bold = true }) => {
+  return (
+    <div className="flex items-center">
+      <span className={`text-base ${bold ? 'font-bold' : 'font-medium'} text-[#415165] mr-1`}>{value}</span>
+      <span className="text-sm font-medium text-[#415165]">{label}</span>
+    </div>
+  );
+};
+
+// const MetricsSection: React.FC = () => {
+//   return (
+//     <div className="grid grid-cols-4 gap-6 mb-8">
+//       <div className="bg-[#ffe2e5] rounded-metric p-6 relative">
+//         <div className="absolute top-6 left-6 w-[54px] h-[50px] bg-[#fa5a7d] rounded-full flex items-center justify-center">
+//           <Image src="/images/img_group_white_a700.svg" alt="Attendance" width={32} height={32} />
+//         </div>
+//         <h3 className="text-2xl font-semibold text-[#151d48] mt-16 mb-4">Attendence</h3>
+//         <div className="space-y-2">
+//           <MetricItem value="24" label="Worker Present" />
+//           <MetricItem value="3" label="Worker Absect" />
+//           <MetricItem value="27" label="Total Worker in Projest" />
+//         </div>
+//       </div>
+
+//       <div className="bg-[#fff4de] rounded-metric p-6 relative">
+//         <div className="absolute top-6 left-6 w-[54px] h-[50px] rounded-full flex items-center justify-center">
+//           <Image src="/images/img_ellipse.svg" alt="Progress" width={54} height={50} />
+//           <Image src="/images/img_vector_gray_50_04.svg" alt="Progress Icon" width={26} height={26} className="absolute" />
+//         </div>
+//         <h3 className="text-2xl font-semibold text-[#151d48] mt-16 mb-4">Project Progress</h3>
+//         <div className="space-y-2">
+//           <MetricItem value="45%" label="Work Remaining" />
+//           <MetricItem value="55%" label="Work Done for Today" />
+//           <p className="text-xs font-medium text-[#4078ec]">+5% from yesterday</p>
+//         </div>
+//       </div>
+
+//       <div className="bg-[#dcfce7] rounded-metric p-6 relative">
+//         <div className="absolute top-6 left-6 w-[52px] h-[48px] bg-[#3cd856] rounded-full flex items-center justify-center">
+//           <Image src="/images/img_group_white_a700_28x31.svg" alt="Budget" width={31} height={28} />
+//         </div>
+//         <h3 className="text-2xl font-semibold text-[#151d48] mt-16 mb-4">Budget</h3>
+//         <div className="space-y-2">
+//           <MetricItem value="5.1 L" label="Total Spend" />
+//           <MetricItem value="50 L" label="Project Budget" />
+//           <p className="text-xs font-medium text-[#4078ec]">+11% From Budget Used</p>
+//         </div>
+//       </div>
+
+//       <div className="bg-[#f3e8ff] rounded-metric p-6 relative">
+//         <div className="absolute top-5 left-11 w-[53px] h-[49px] bg-[#bf83ff] rounded-full flex items-center justify-center">
+//           <Image src="/images/img_group_white_a700_29x32.svg" alt="Targets" width={32} height={29} />
+//         </div>
+//         <h3 className="text-2xl font-semibold text-[#151d48] mt-16 mb-4">Targets</h3>
+//       </div>
+//     </div>
+//   );
+// };
+
+// const MetricsSection: React.FC = () => {
+//   return (
+//     <div className="grid grid-cols-3 gap-6 mb-8">
+//       <div className="bg-[#ffe2e5] rounded-metric p-6 relative">
+//         <div className="absolute top-6 left-6 w-[54px] h-[50px] bg-[#fa5a7d] rounded-full flex items-center justify-center">
+//           <Image src="/images/img_group_white_a700.svg" alt="Attendance" width={32} height={32} />
+//         </div>
+//         <h3 className="text-2xl font-semibold text-[#151d48] mt-16 mb-4">Attendence</h3>
+//         <div className="space-y-2">
+//           <MetricItem value="24" label="Worker Present" />
+//           <MetricItem value="3" label="Worker Absect" />
+//           <MetricItem value="27" label="Total Worker in Projest" />
+//         </div>
+//       </div>
+
+//       <div className="bg-[#fff4de] rounded-metric p-6 relative">
+//         <div className="absolute top-6 left-6 w-[54px] h-[50px] rounded-full flex items-center justify-center">
+//           <Image src="/images/img_ellipse.svg" alt="Progress" width={54} height={50} />
+//           <Image src="/images/img_vector_gray_50_04.svg" alt="Progress Icon" width={26} height={26} className="absolute" />
+//         </div>
+//         <h3 className="text-2xl font-semibold text-[#151d48] mt-16 mb-4"> Progress</h3>
+//         <div className="space-y-2">
+//           <MetricItem value="45%" label="Work Remaining" />
+//           <MetricItem value="55%" label="Work Done for Today" />
+//           <p className="text-xs font-medium text-[#4078ec]">+5% from yesterday</p>
+//         </div>
+//       </div>
+
+//       <div className="bg-[#dcfce7] rounded-metric p-6 relative">
+//         <div className="absolute top-6 left-6 w-[52px] h-[48px] bg-[#3cd856] rounded-full flex items-center justify-center">
+//           <Image src="/images/img_group_white_a700_28x31.svg" alt="Budget" width={31} height={28} />
+//         </div>
+//         <h3 className="text-2xl font-semibold text-[#151d48] mt-16 mb-4">Budget</h3>
+//         <div className="space-y-2">
+//           <MetricItem value="5.1 L" label="Total Spend" />
+//           <MetricItem value="50 L" label="Project Budget" />
+//           <p className="text-xs font-medium text-[#4078ec]">+11% From Budget Used</p>
+//         </div>
+//       </div>
+//     </div>
+//   );
+// };
+const MetricsSection: React.FC = () => {
+  const handleClick = (link: string) => {
+    // For now, just open the link or do nothing if link is empty
+    if (link) {
+      window.location.href = link;
+    }
+  };
+
+  return (
+    <div className="grid grid-cols-3 gap-6 mb-8">
+      <div
+        onClick={() => handleClick("#attendance")}
+        className="bg-[#ffe2e5] rounded-metric p-6 relative cursor-pointer transform transition-transform duration-200 hover:scale-105 hover:shadow-lg"
+      >
+        <div className="absolute top-6 left-6 w-[54px] h-[50px] bg-[#fa5a7d] rounded-full flex items-center justify-center">
+          <Image src="/images/img_group_white_a700.svg" alt="Attendance" width={32} height={32} />
+        </div>
+        <h3 className="text-2xl font-semibold text-[#151d48] mt-16 mb-4">Attendence</h3>
+        <div className="space-y-2">
+          <MetricItem value="24" label="Worker Present" />
+          <MetricItem value="3" label="Worker Absect" />
+          <MetricItem value="27" label="Total Worker in Projest" />
+        </div>
+      </div>
+
+      <div
+        onClick={() => handleClick("#progress")}
+        className="bg-[#fff4de] rounded-metric p-6 relative cursor-pointer transform transition-transform duration-200 hover:scale-105 hover:shadow-lg"
+      >
+        <div className="absolute top-6 left-6 w-[54px] h-[50px] rounded-full flex items-center justify-center">
+          <Image src="/images/img_ellipse.svg" alt="Progress" width={54} height={50} />
+          <Image
+            src="/images/img_vector_gray_50_04.svg"
+            alt="Progress Icon"
+            width={26}
+            height={26}
+            className="absolute"
+          />
+        </div>
+        <h3 className="text-2xl font-semibold text-[#151d48] mt-16 mb-4">Progress</h3>
+        <div className="space-y-2">
+          <MetricItem value="45%" label="Work Remaining" />
+          <MetricItem value="55%" label="Work Done for Today" />
+          <p className="text-xs font-medium text-[#4078ec]">+5% from yesterday</p>
+        </div>
+      </div>
+
+      <div
+        onClick={() => handleClick("#budget")}
+        className="bg-[#dcfce7] rounded-metric p-6 relative cursor-pointer transform transition-transform duration-200 hover:scale-105 hover:shadow-lg"
+      >
+        <div className="absolute top-6 left-6 w-[52px] h-[48px] bg-[#3cd856] rounded-full flex items-center justify-center">
+          <Image src="/images/img_group_white_a700_28x31.svg" alt="Budget" width={31} height={28} />
+        </div>
+        <h3 className="text-2xl font-semibold text-[#151d48] mt-16 mb-4">Budget</h3>
+        <div className="space-y-2">
+          <MetricItem value="5.1 L" label="Total Spend" />
+          <MetricItem value="50 L" label="Project Budget" />
+          <p className="text-xs font-medium text-[#4078ec]">+11% From Budget Used</p>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default MetricsSection;
+
+====== FILE: ./app/dashboard/ProjectsTable.tsx ======
+
+'use client';
+
+import React from 'react';
+import Card from '@/components/common/Card';
+import ProgressBar from '@/components/ui/ProgressBar';
+import Chip from '@/components/ui/Chip';
+
+interface Project {
+  id: string;
+  name: string;
+  progress: number;
+  progressColor: string;
+  progressBgColor: string;
+  status: 'active' | 'hold' | 'complete';
+}
+
+const projects: Project[] = [
+  {
+    id: '01',
+    name: 'Home Decor Range',
+    progress: 78,
+    progressColor: '#0094ff',
+    progressBgColor: '#cde7ff',
+    status: 'active'
+  },
+  {
+    id: '02',
+    name: "Disney Princess Pink Bag 18'",
+    progress: 61,
+    progressColor: '#00e095',
+    progressBgColor: '#8bf9c6',
+    status: 'active'
+  },
+  {
+    id: '03',
+    name: 'Bathroom Essentials',
+    progress: 55,
+    progressColor: '#884dff',
+    progressBgColor: '#c5a8ff',
+    status: 'hold'
+  },
+  {
+    id: '04',
+    name: 'Apple Smartwatches',
+    progress: 33,
+    progressColor: '#ff8e0c',
+    progressBgColor: '#ffd4a3',
+    status: 'complete'
+  }
+];
+
+const ProjectsTable: React.FC = () => {
+  return (
+    <Card className="p-6 mb-8">
+      <h3 className="text-xl font-semibold text-[#05004e] mb-6">Projects</h3>
+      
+      <div className="overflow-x-auto">
+        <table className="w-full">
+          <thead>
+            <tr className="border-b border-[#f8f9fa]">
+              <th className="text-left py-4 text-sm font-normal text-[#96a5b8] w-24">Project ID</th>
+              <th className="text-left py-4 text-sm font-normal text-[#96a5b8]">Project Name</th>
+              <th className="text-left py-4 text-sm font-normal text-[#96a5b8] w-1/3">Project Progress</th>
+              <th className="text-left py-4 text-sm font-normal text-[#96a5b8] w-32">Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            {projects.map((project) => (
+              <tr key={project.id} className="border-b border-[#f8f9fa]">
+                <td className="py-4 text-sm text-[#444a6d]">{project.id}</td>
+                <td className="py-4 text-sm text-[#444a6d]">{project.name}</td>
+                <td className="py-4">
+                  <ProgressBar 
+                    progress={project.progress} 
+                    color={project.progressColor} 
+                    bgColor={project.progressBgColor} 
+                  />
+                </td>
+                <td className="py-4">
+                  <Chip 
+                    label={project.status === 'active' ? 'Active' : project.status === 'hold' ? 'Hold' : 'Complete'} 
+                    variant={project.status} 
+                  />
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </Card>
+  );
+};
+
+export default ProjectsTable;
+
+====== FILE: ./app/dashboard/page.tsx ======
+
+'use client';
+
+import React from 'react';
+import Link from 'next/link';  // Import Link
+import MetricsSection from './MetricsSection';
+import ChartsSection from './ChartsSection';
+import ProjectsTable from './ProjectsTable';
+import HelmetStatusChart from './HelmetStatusChart';
+import Card from '@/components/common/Card';
+
+export default function Dashboard() {
+  const isActive = true;
+
+  return (
+    <>
+      <Card className="p-6 mb-6 flex flex-col gap-6 relative">
+        {/* Header inside Card */}
+        <div className="flex justify-between items-start mb-4">
+          {/* Left Side: Separate links for Project ID and Title */}
+          <div className="flex flex-col gap-1">
+            <Link href="/projects/Project_ID_A1" passHref legacyBehavior>
+              <a
+                className="text-sm font-semibold text-[#a4a4ad] cursor-pointer transition-transform duration-200 hover:text-blue-600 hover:scale-110 inline-block"
+                aria-label="Go to Project ID A1"
+              >
+                Project_ID_A1
+              </a>
+            </Link>
+
+            <Link href="/sales/today" passHref legacyBehavior>
+              <a
+                className="text-2xl font-semibold text-[#05004e] cursor-pointer transition-transform duration-200 hover:text-blue-600 hover:scale-105 inline-block"
+                aria-label="Go to Today's Sales"
+              >
+                Today's Sales
+              </a>
+            </Link>
+          </div>
+
+          {/* Right Side: Status */}
+          <div
+            className="flex items-center gap-2 px-3 py-1 rounded-full text-sm font-medium"
+            style={{
+              backgroundColor: isActive ? '#d1fae5' : '#fee2e2',
+              color: isActive ? '#065f46' : '#991b1b',
+            }}
+          >
+            <span
+              className="w-2 h-2 rounded-full"
+              style={{ backgroundColor: isActive ? '#10b981' : '#ef4444' }}
+            />
+            {isActive ? 'Active' : 'Deactive'}
+          </div>
+        </div>
+
+        {/* Card Content */}
+        <div className="flex flex-col lg:flex-row gap-6">
+          <MetricsSection />
+          <HelmetStatusChart />
+        </div>
+      </Card>
+
+      <ChartsSection />
+      <ProjectsTable />
+    </>
+  );
+}
+
+
+====== FILE: ./app/dashboard/ChartsSection.tsx ======
+
+'use client';
+
+import React from 'react';
+import Card from '@/components/common/Card';
+import Image from 'next/image';
+
+const EffectiveWorkChart: React.FC = () => {
+  return (
+    <Card className="p-6 h-[351px] overflow-hidden">
+      <h3 className="text-xl font-semibold text-[#05004e] mb-6">Effective Work</h3>
+      
+      <div className="relative h-[200px] overflow-hidden">
+        {/* Y-axis labels */}
+        <div className="absolute left-0 top-0 flex flex-col justify-between h-full">
+          {[25, 20, 15, 10, 5, 0].map((v) => (
+            <span key={v} className="text-xs text-[#7a91b0]">{v}k</span>
+          ))}
+        </div>
+
+        {/* Chart bars */}
+        <div className="ml-10 flex justify-between items-end h-full overflow-hidden">
+          {[
+            { day: 'Mon', height: 88 },
+            { day: 'Tue', height: 108 },
+            { day: 'Wed', height: 144 },
+            { day: 'Thu', height: 100 },
+            { day: 'Fri', height: 76 },
+            { day: 'Sat', height: 106 },
+            // { day: 'Sun', height: 134 },
+          ].map(({ day, height }) => (
+            <div key={day} className="flex flex-col items-center">
+              <div className="flex items-end" style={{ height: '120px' }}>
+                <Image src="/images/img_group_14.svg" alt={day} width={28} height={height} />
+              </div>
+              <span className="text-xs text-[#7a91b0] mt-2">{day}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className="flex justify-center mt-4 space-x-8">
+        <div className="flex items-center text-xs text-[#222b45]">
+          <span className="mr-2">Effective Hours</span>
+          <div className="w-[11px] h-[11px] rounded-full bg-[#0094ff]"></div>
+        </div>
+        <div className="flex items-center text-xs text-[#222b45]">
+          <span className="mr-2">Working Hours</span>
+          <div className="w-[10px] h-[11px] rounded-full bg-[#00e095]"></div>
+        </div>
+      </div>
+    </Card>
+  );
+};
+
+// const CustomerSatisfactionChart: React.FC = () => {
+//   return (
+//     <Card className="p-6 h-[351px] overflow-hidden">
+//       <h3 className="text-xl font-semibold text-[#05004e] mb-4">Customer Satisfaction</h3>
+//       <div className="relative h-[200px] mt-4 overflow-hidden">
+//         <Image 
+//           src="/images/img_group_17.png" 
+//           alt="Customer Satisfaction Chart" 
+//           width={398} 
+//           height={167} 
+//           className="absolute top-0 left-0 max-w-full"
+//         />
+//         <Image 
+//           src="/images/img_group_16.png" 
+//           alt="Overlay" 
+//           width={396} 
+//           height={93} 
+//           className="absolute top-[72px] left-0 max-w-full"
+//         />
+//       </div>
+
+//       <div className="flex justify-between mt-8 border-t pt-4">
+//         <div className="flex flex-col">
+//           <span className="text-sm text-[#96a5b8]">Last Month</span>
+//           <div className="flex items-center">
+//             <Image src="/images/img_group_18.svg" alt="Down" width={19} height={9} className="mr-2" />
+//             <span className="text-sm font-medium text-[#222b45]">$3,004</span>
+//           </div>
+//         </div>
+
+//         <div className="h-6 w-px bg-[#bcc9d3] mx-4 self-center"></div>
+
+//         <div className="flex flex-col">
+//           <span className="text-sm text-[#96a5b8]">This Month</span>
+//           <div className="flex items-center">
+//             <Image src="/images/img_group_18_copy.svg" alt="Up" width={19} height={9} className="mr-2" />
+//             <span className="text-sm font-medium text-[#222b45]">$4,504</span>
+//           </div>
+//         </div>
+//       </div>
+//     </Card>
+//   );
+// };
+
+const CustomerSatisfactionChart: React.FC = () => {
+  return (
+    <Card className="p-6 h-[351px] overflow-hidden">
+      <h3 className="text-xl font-semibold text-[#05004e] mb-4">Customer Satisfaction</h3>
+
+      <div className="relative h-[200px] mt-2 overflow-hidden">
+        <Image 
+          src="/images/img_group_17.png" 
+          alt="Customer Satisfaction Chart" 
+          width={398} 
+          height={167} 
+          className="absolute top-0 left-0 max-w-full"
+        />
+        <Image 
+          src="/images/img_group_16.png" 
+          alt="Overlay" 
+          width={396} 
+          height={93} 
+          className="absolute top-[72px] left-0 max-w-full"
+        />
+      </div>
+
+      {/* Reduced top margin from mt-8 to mt-4 */}
+      <div className="flex justify-between mt-0 border-t pt-4">
+        <div className="flex flex-col">
+          <span className="text-sm text-[#96a5b8]">Last Month</span>
+          <div className="flex items-center">
+            <Image src="/images/img_group_18.svg" alt="Down" width={19} height={9} className="mr-2" />
+            <span className="text-sm font-medium text-[#222b45]">$3,004</span>
+          </div>
+        </div>
+
+        <div className="h-6 w-px bg-[#bcc9d3] mx-4 self-center"></div>
+
+        <div className="flex flex-col">
+          <span className="text-sm text-[#96a5b8]">This Month</span>
+          <div className="flex items-center">
+            <Image src="/images/img_group_18_copy.svg" alt="Up" width={19} height={9} className="mr-2" />
+            <span className="text-sm font-medium text-[#222b45]">$4,504</span>
+          </div>
+        </div>
+      </div>
+    </Card>
+  );
+};
+
+
+
+const TargetVsRealityChart: React.FC = () => {
+  return (
+    <Card className="p-6 h-[351px] overflow-hidden">
+      <h3 className="text-xl font-semibold text-[#05004e] mb-6">Target vs Reality</h3>
+      <div className="relative h-[160px] mt-4 overflow-hidden">
+        <div className="flex justify-between items-end h-full">
+          {['Jan', 'Feb', 'Mar', 'Apr', 'May', 'June', 'July'].map((month, index) => (
+            <div key={month} className="flex flex-col items-center">
+              <Image
+                src="/images/img_group_1000002782.svg"
+                alt={month}
+                width={36}
+                height={index % 2 === 0 ? 116 : 92}
+              />
+              <span className="text-xs text-[#7a91b0] mt-2">{month}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className="mt-6 space-y-4">
+        <div className="flex items-center">
+          <div className="w-9 h-9 bg-[#27ae60] rounded-full flex items-center justify-center mr-4">
+            <Image src="/images/img_avatar.svg" alt="Reality" width={20} height={20} />
+          </div>
+          <div className="flex-1">
+            <h4 className="text-xs font-semibold text-[#151d48]">Reality Sales</h4>
+            <p className="text-[10px] text-[#737791]">Achieved (In Green)</p>
+          </div>
+          <span className="text-sm font-medium text-[#27ae60]">8.823</span>
+        </div>
+
+        <div className="flex items-center">
+          <div className="w-9 h-9 bg-[#ffa412] rounded-full flex items-center justify-center mr-4">
+            <Image src="/images/img_avatar_orange_50_01.svg" alt="Target" width={20} height={20} />
+          </div>
+          <div className="flex-1">
+            <h4 className="text-xs font-semibold text-[#151d48]">Target Sales</h4>
+            <p className="text-[10px] text-[#737791]">Goal (In Yellow)</p>
+          </div>
+          <span className="text-sm font-medium text-[#ffa412]">12.122</span>
+        </div>
+      </div>
+    </Card>
+  );
+};
+
+const ChartsSection: React.FC = () => {
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-8">
+      <EffectiveWorkChart />
+      <CustomerSatisfactionChart />
+      <TargetVsRealityChart />
+    </div>
+  );
+};
+
+export default ChartsSection;
+
+
+====== FILE: ./app/layout.tsx ======
+
+'use client';
+
+import '@/styles/index.css';
+import React from 'react';
+import Header from '@/components/common/Header';
+import Sidebar from '@/components/common/Sidebar';
+
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  return (
+    <html lang="en">
+      <body className="bg-[#fafbfc]">
+        <div className="flex h-screen">
+          <Sidebar />
+          <div className="flex-1 flex flex-col overflow-hidden">
+            <Header />
+            <main className="flex-1 overflow-y-auto p-8">
+              {children}
+            </main>
+          </div>
+        </div>
+      </body>
+    </html>
+  );
+}
+
+====== FILE: ./app/reportsanalytics/page.tsx ======
+
+'use client';
+
+import React, { useState } from 'react';
+import Header from '@/components/common/Header';
+import Sidebar from '@/components/common/Sidebar';
+import Card from '@/components/common/Card';
+import { Download, Calendar, Filter, ChevronDown, Users, Clock, FileText } from 'lucide-react';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, 
+         LineChart, Line, PieChart, Pie, Cell } from 'recharts';
+
+export default function ReportsAnalytics() {
+  const [dateRange, setDateRange] = useState('This Month');
+  const [reportType, setReportType] = useState('Performance');
+  
+  // Sample data for charts
+  const performanceData = [
+    { name: 'Week 1', excellent: 12, good: 18, average: 8, poor: 2 },
+    { name: 'Week 2', excellent: 15, good: 16, average: 6, poor: 3 },
+    { name: 'Week 3', excellent: 18, good: 14, average: 7, poor: 1 },
+    { name: 'Week 4', excellent: 20, good: 15, average: 5, poor: 0 },
+  ];
+  
+  const attendanceData = [
+    { name: 'John', id: 'WRK-001', attendance: 98 },
+    { name: 'Jane', id: 'WRK-002', attendance: 95 },
+    { name: 'Mike', id: 'WRK-003', attendance: 90 },
+    { name: 'Sarah', id: 'WRK-004', attendance: 99 },
+    { name: 'David', id: 'WRK-005', attendance: 92 },
+    { name: 'Alex', id: 'WRK-006', attendance: 97 },
+    { name: 'Linda', id: 'WRK-007', attendance: 88 },
+    { name: 'Robert', id: 'WRK-008', attendance: 94 },
+  ];
+  
+  const projectProgressData = [
+    { name: 'Project A1', completed: 72, remaining: 28 },
+    { name: 'Project B2', completed: 38, remaining: 62 },
+    { name: 'Project C3', completed: 45, remaining: 55 },
+    { name: 'Project D4', completed: 85, remaining: 15 },
+    { name: 'Project E5', completed: 100, remaining: 0 },
+  ];
+  
+  const pieData = [
+    { name: 'Electrical', value: 35 },
+    { name: 'Plumbing', value: 25 },
+    { name: 'Carpentry', value: 20 },
+    { name: 'Masonry', value: 15 },
+    { name: 'Others', value: 5 },
+  ];
+  
+  const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8'];
+  
+  // Sample reports list
+  const reports = [
+    { 
+      id: 'REP-001', 
+      title: 'Monthly Performance Summary', 
+      date: '2025-05-01', 
+      type: 'Performance', 
+      author: 'System', 
+      size: '2.4 MB' 
+    },
+    { 
+      id: 'REP-002', 
+      title: 'Project A1 Progress Report', 
+      date: '2025-05-10', 
+      type: 'Project', 
+      author: 'Robert Chen', 
+      size: '3.1 MB' 
+    },
+    { 
+      id: 'REP-003', 
+      title: 'Worker Efficiency Analysis Q1', 
+      date: '2025-04-15', 
+      type: 'Efficiency', 
+      author: 'System', 
+      size: '4.7 MB' 
+    },
+    { 
+      id: 'REP-004', 
+      title: 'Safety Incident Summary', 
+      date: '2025-05-05', 
+      type: 'Safety', 
+      author: 'Maria Lopez', 
+      size: '1.8 MB' 
+    },
+    { 
+      id: 'REP-005', 
+      title: 'Attendance & Work Hours Report', 
+      date: '2025-05-15', 
+      type: 'Attendance', 
+      author: 'System', 
+      size: '2.9 MB' 
+    },
+  ];
+
+  return (
+        <div className="flex-1 overflow-y-auto p-0">
+          <div className="flex justify-between items-center mb-6">
+            <h1 className="text-2xl font-semibold text-[#05004e]">Reports & Analytics</h1>
+            
+            <div className="flex items-center gap-4">
+              <div className="relative">
+                <button className="flex items-center gap-2 px-4 py-2 rounded-lg bg-white border border-gray-300 text-gray-700">
+                  <Calendar size={18} />
+                  <span>{dateRange}</span>
+                  <ChevronDown size={16} />
+                </button>
+              </div>
+              
+              <button className="flex items-center gap-2 px-4 py-2 rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200">
+                <Filter size={18} />
+                <span>Filter</span>
+              </button>
+              
+              <button className="flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700">
+                <Download size={18} />
+                <span>Export Report</span>
+              </button>
+            </div>
+          </div>
+          
+          {/* Report Type Selection */}
+          <div className="flex mb-6 bg-white rounded-lg border border-gray-200 p-1">
+            {['Performance', 'Attendance','Safety', 'Efficiency'].map((type) => (
+              <button
+                key={type}
+                className={`flex-1 py-2 text-sm font-medium rounded-md ${
+                  reportType === type ? 'bg-blue-600 text-white' : 'text-gray-500 hover:bg-gray-100'
+                }`}
+                onClick={() => setReportType(type)}
+              >
+                {type}
+              </button>
+            ))}
+          </div>
+          
+          {/* Dashboard Analytics */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+            <Card className="p-6 lg:col-span-2">
+              <h2 className="text-lg font-semibold mb-4 text-[#05004e]">Worker Performance Trends</h2>
+              <div className="h-72">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart
+                    data={performanceData}
+                    margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="name" />
+                    <YAxis />
+                    <Tooltip />
+                    <Legend />
+                    <Bar dataKey="excellent" stackId="a" fill="#4ADE80" />
+                    <Bar dataKey="good" stackId="a" fill="#60A5FA" />
+                    <Bar dataKey="average" stackId="a" fill="#FBBF24" />
+                    <Bar dataKey="poor" stackId="a" fill="#F87171" />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </Card>
+            
+            <Card className="p-6">
+              <h2 className="text-lg font-semibold mb-4 text-[#05004e]">Labor Distribution</h2>
+              <div className="h-72 flex justify-center">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={pieData}
+                      cx="50%"
+                      cy="50%"
+                      labelLine={false}
+                      label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                      outerRadius={80}
+                      fill="#8884d8"
+                      dataKey="value"
+                    >
+                      {pieData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                      ))}
+                    </Pie>
+                    <Tooltip />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+            </Card>
+          </div>
+          
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+            <Card className="p-6">
+              <h2 className="text-lg font-semibold mb-4 text-[#05004e]">Worker Attendance Rate</h2>
+              <div className="h-72">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart
+                    data={attendanceData}
+                    margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+                    layout="vertical"
+                  >
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis type="number" domain={[0, 100]} />
+                    <YAxis dataKey="name" type="category" scale="band" />
+                    <Tooltip />
+                    <Bar dataKey="attendance" fill="#60A5FA" radius={[0, 4, 4, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </Card>
+            
+            <Card className="p-6">
+              <h2 className="text-lg font-semibold mb-4 text-[#05004e]">Project Progress</h2>
+              <div className="h-72">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart
+                    data={projectProgressData}
+                    margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+                    layout="vertical"
+                  >
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis type="number" domain={[0, 100]} />
+                    <YAxis dataKey="name" type="category" scale="band" />
+                    <Tooltip />
+                    <Legend />
+                    <Bar dataKey="completed" stackId="a" fill="#4ADE80" />
+                    <Bar dataKey="remaining" stackId="a" fill="#E5E7EB" />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </Card>
+          </div>
+          
+          {/* Generated Reports */}
+          <Card className="p-6">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-lg font-semibold text-[#05004e]">Generated Reports</h2>
+              
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-gray-500">Sort by:</span>
+                <button className="flex items-center gap-1 text-sm text-gray-700">
+                  <span>Date</span>
+                  <ChevronDown size={16} />
+                </button>
+              </div>
+            </div>
+            
+            <div className="overflow-x-auto">
+              <table className="min-w-full">
+                <thead>
+                  <tr className="bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 rounded-tl-lg">Report</th>
+                    <th className="px-6 py-3">Type</th>
+                    <th className="px-6 py-3">Date</th>
+                    <th className="px-6 py-3">Author</th>
+                    <th className="px-6 py-3">Size</th>
+                    <th className="px-6 py-3 rounded-tr-lg">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-200">
+                  {reports.map((report) => (
+                    <tr key={report.id} className="hover:bg-gray-50">
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="flex items-center">
+                          <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center mr-3">
+                            <FileText size={16} className="text-blue-600" />
+                          </div>
+                          <div>
+                            <div className="text-sm font-medium text-gray-900">{report.title}</div>
+                            <div className="text-xs text-gray-500">{report.id}</div>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {report.type}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {report.date}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {report.author}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {report.size}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm">
+                        <button className="text-blue-600 hover:text-blue-800 font-medium flex items-center gap-1">
+                          <Download size={16} />
+                          <span>Download</span>
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </Card>
+        </div>
+  );
+}
+
+====== FILE: ./app/(auth)/register/page.tsx ======
+
+
+
+====== FILE: ./app/(auth)/login/page.tsx ======
+
+
+
+====== FILE: ./styles/index.css ======
+
+@import './tailwind.css';
+
+/* Global styles */
+html, body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  font-family: 'Poppins', 'Open Sans', sans-serif;
+  background-color: #fafbfc;
+}
+
+/* Add any other global styles here */
+
+====== FILE: ./styles/tailwind.css ======
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Primary Colors */
+    --primary-background: #5d5fef;
+    --primary-foreground: #ffffff;
+    --primary-light: #7a65e2;
+    --primary-dark: #4b4dbe;
+
+    /* Secondary Colors */
+    --secondary-background: #ffffff;
+    --secondary-foreground: #151d48;
+    --secondary-light: #f9fafb;
+    --secondary-dark: #737791;
+
+    /* Accent Colors */
+    --accent-color: #00e095;
+    --accent-foreground: #ffffff;
+    --accent-light: #8bf9c6;
+    --accent-dark: #00b376;
+
+    /* Status Colors */
+    --status-active: #00e48f;
+    --status-hold: #884dff;
+    --status-complete: #ff8900;
+    --status-issue: #fa5a7d;
+
+    /* Chart Colors */
+    --chart-blue: #0094ff;
+    --chart-green: #00e095;
+    --chart-purple: #884dff;
+    --chart-orange: #ff8e0c;
+
+    /* Border Colors */
+    --border-primary: #f8f9fa;
+    --border-secondary: #ededed;
+    --border-light: #eef0f2;
+    --border-dark: #737791;
+  }
+}
+
+@layer utilities {
+  /* Background Color Utilities */
+  .bg-primary {
+    background-color: var(--primary-background);
+  }
+
+  .bg-secondary {
+    background-color: var(--secondary-background);
+  }
+
+  .bg-accent {
+    background-color: var(--accent-color);
+  }
+
+  .bg-status-active {
+    background-color: var(--status-active);
+  }
+
+  .bg-status-hold {
+    background-color: var(--status-hold);
+  }
+
+  .bg-status-complete {
+    background-color: var(--status-complete);
+  }
+
+  .bg-status-issue {
+    background-color: var(--status-issue);
+  }
+
+  .bg-chart-blue {
+    background-color: var(--chart-blue);
+  }
+
+  .bg-chart-green {
+    background-color: var(--chart-green);
+  }
+
+  .bg-chart-purple {
+    background-color: var(--chart-purple);
+  }
+
+  .bg-chart-orange {
+    background-color: var(--chart-orange);
+  }
+
+  /* Text Color Utilities */
+  .text-primary {
+    color: var(--primary-background);
+  }
+
+  .text-secondary {
+    color: var(--secondary-foreground);
+  }
+
+  .text-muted {
+    color: var(--secondary-dark);
+  }
+
+  .text-accent {
+    color: var(--accent-color);
+  }
+
+  .text-status-active {
+    color: var(--status-active);
+  }
+
+  .text-status-hold {
+    color: var(--status-hold);
+  }
+
+  .text-status-complete {
+    color: var(--status-complete);
+  }
+
+  .text-status-issue {
+    color: var(--status-issue);
+  }
+
+  /* Border Color Utilities */
+  .border-primary {
+    border-color: var(--border-primary);
+  }
+
+  .border-secondary {
+    border-color: var(--border-secondary);
+  }
+
+  .border-light {
+    border-color: var(--border-light);
+  }
+
+  .border-dark {
+    border-color: var(--border-dark);
+  }
+
+  .border-status-active {
+    border-color: var(--status-active);
+  }
+
+  .border-status-hold {
+    border-color: var(--status-hold);
+  }
+
+  .border-status-complete {
+    border-color: var(--status-complete);
+  }
+}
+
+====== FILE: ./components/ui/InputField.tsx ======
+
+'use client';
+
+import React, { InputHTMLAttributes } from 'react';
+
+interface InputFieldProps extends InputHTMLAttributes<HTMLInputElement> {
+  label?: string;
+  error?: string;
+  icon?: React.ReactNode;
+  className?: string;
+}
+
+const InputField: React.FC<InputFieldProps> = ({
+  label,
+  error,
+  icon,
+  className = '',
+  ...props
+}) => {
+  return (
+    <div className={`mb-4 ${className}`}>
+      {label && (
+        <label className="block text-sm font-medium text-gray-700 mb-1">
+          {label}
+        </label>
+      )}
+      <div className="relative">
+        {icon && (
+          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+            {icon}
+          </div>
+        )}
+        <input
+          className={`w-full px-4 py-2 ${
+            icon ? 'pl-10' : ''
+          } border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent ${
+            error ? 'border-red-500' : 'border-gray-300'
+          }`}
+          {...props}
+        />
+      </div>
+      {error && <p className="mt-1 text-sm text-red-600">{error}</p>}
+    </div>
+  );
+};
+
+export default InputField;
+
+====== FILE: ./components/ui/Loader.tsx ======
+
+'use client';
+
+import React from 'react';
+
+interface LoaderProps {
+  size?: 'small' | 'medium' | 'large';
+  color?: string;
+  className?: string;
+}
+
+const Loader: React.FC<LoaderProps> = ({
+  size = 'medium',
+  color = '#5d5fef',
+  className = '',
+}) => {
+  const sizeMap = {
+    small: 'w-4 h-4',
+    medium: 'w-8 h-8',
+    large: 'w-12 h-12',
+  };
+
+  return (
+    <div className={`flex justify-center items-center ${className}`}>
+      <div
+        className={`${sizeMap[size]} border-4 border-t-transparent rounded-full animate-spin`}
+        style={{ borderColor: `transparent ${color} ${color} ${color}` }}
+      ></div>
+    </div>
+  );
+};
+
+export default Loader;
+
+====== FILE: ./components/ui/ProgressBar.tsx ======
+
+'use client';
+
+import React from 'react';
+
+interface ProgressBarProps {
+  progress: number;
+  color?: string;
+  bgColor?: string;
+  height?: number;
+  className?: string;
+}
+
+const ProgressBar: React.FC<ProgressBarProps> = ({
+  progress,
+  color = '#0094ff',
+  bgColor = '#cde7ff',
+  height = 3,
+  className = '',
+}) => {
+  // Ensure progress is between 0 and 100
+  const validProgress = Math.min(Math.max(progress, 0), 100);
+
+  return (
+    <div 
+      className={`w-full rounded-[1px] ${className}`} 
+      style={{ 
+        backgroundColor: bgColor,
+        height: `${height}px`
+      }}
+    >
+      <div
+        className="rounded-[1px]"
+        style={{
+          width: `${validProgress}%`,
+          backgroundColor: color,
+          height: `${height}px`,
+          transition: 'width 0.5s ease-in-out'
+        }}
+      />
+    </div>
+  );
+};
+
+export default ProgressBar;
+
+====== FILE: ./components/ui/Chip.tsx ======
+
+'use client';
+
+import React from 'react';
+
+type ChipVariant = 'active' | 'hold' | 'complete';
+
+interface ChipProps {
+  label: string;
+  variant: ChipVariant;
+  className?: string;
+}
+
+const Chip: React.FC<ChipProps> = ({ label, variant, className = '' }) => {
+  const variantStyles = {
+    active: 'bg-[#f0fdf4] text-[#00e58f] border-[#00e48f]',
+    hold: 'bg-[#fbf1ff] text-[#884dff] border-[#884dff]',
+    complete: 'bg-[#fdf5e6] text-[#ff8900] border-[#ff8900]',
+  };
+
+  return (
+    <div className={`px-4 py-1 text-sm rounded-lg border ${variantStyles[variant]} ${className}`}>
+      {label}
+    </div>
+  );
+};
+
+export default Chip;
+
+====== FILE: ./components/ui/Notifications.tsx ======
+
+'use client';
+
+import React, { useState } from 'react';
+import Image from 'next/image';
+
+interface Notification {
+  id: string;
+  title: string;
+  message: string;
+  time: string;
+  read: boolean;
+  type: 'info' | 'warning' | 'success' | 'error';
+}
+
+interface NotificationsProps {
+  initialNotifications?: Notification[];
+}
+
+const Notifications: React.FC<NotificationsProps> = ({
+  initialNotifications = [],
+}) => {
+  const [notifications, setNotifications] = useState<Notification[]>(initialNotifications);
+  const [isOpen, setIsOpen] = useState(false);
+
+  const unreadCount = notifications.filter(n => !n.read).length;
+
+  const toggleNotifications = () => {
+    setIsOpen(!isOpen);
+  };
+
+  const markAsRead = (id: string) => {
+    setNotifications(
+      notifications.map(notification =>
+        notification.id === id ? { ...notification, read: true } : notification
+      )
+    );
+  };
+
+  const markAllAsRead = () => {
+    setNotifications(
+      notifications.map(notification => ({ ...notification, read: true }))
+    );
+  };
+
+  const deleteNotification = (id: string) => {
+    setNotifications(notifications.filter(notification => notification.id !== id));
+  };
+
+  return (
+    <div className="relative">
+      <button
+        className="relative p-2 rounded-full hover:bg-gray-100 focus:outline-none"
+        onClick={toggleNotifications}
+      >
+        <Image 
+          src="/images/img_notifications.svg" 
+          alt="Notifications" 
+          width={48} 
+          height={48} 
+        />
+        {unreadCount > 0 && (
+          <span className="absolute top-0 right-0 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-white transform translate-x-1/2 -translate-y-1/2 bg-red-500 rounded-full">
+            {unreadCount}
+          </span>
+        )}
+      </button>
+
+      {isOpen && (
+        <div className="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-lg z-50">
+          <div className="p-4 border-b border-gray-200">
+            <div className="flex justify-between items-center">
+              <h3 className="text-lg font-semibold">Notifications</h3>
+              {unreadCount > 0 && (
+                <button
+                  className="text-sm text-primary hover:text-primary-dark"
+                  onClick={markAllAsRead}
+                >
+                  Mark all as read
+                </button>
+              )}
+            </div>
+          </div>
+
+          <div className="max-h-96 overflow-y-auto">
+            {notifications.length === 0 ? (
+              <div className="p-4 text-center text-gray-500">
+                No notifications
+              </div>
+            ) : (
+              notifications.map(notification => (
+                <div
+                  key={notification.id}
+                  className={`p-4 border-b border-gray-100 hover:bg-gray-50 ${
+                    !notification.read ? 'bg-blue-50' : ''
+                  }`}
+                >
+                  <div className="flex justify-between">
+                    <h4 className="font-medium">{notification.title}</h4>
+                    <span className="text-xs text-gray-500">{notification.time}</span>
+                  </div>
+                  <p className="text-sm text-gray-600 mt-1">{notification.message}</p>
+                  <div className="flex justify-end mt-2">
+                    {!notification.read && (
+                      <button
+                        className="text-xs text-primary mr-3 hover:text-primary-dark"
+                        onClick={() => markAsRead(notification.id)}
+                      >
+                        Mark as read
+                      </button>
+                    )}
+                    <button
+                      className="text-xs text-gray-500 hover:text-gray-700"
+                      onClick={() => deleteNotification(notification.id)}
+                    >
+                      Delete
+                    </button>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default Notifications;
+
+====== FILE: ./components/ui/Dropdown.tsx ======
+
+'use client';
+
+import React, { useState, useRef, useEffect } from 'react';
+
+interface DropdownOption {
+  value: string;
+  label: string;
+}
+
+interface DropdownProps {
+  options: DropdownOption[];
+  value?: string;
+  onChange: (value: string) => void;
+  placeholder?: string;
+  className?: string;
+  disabled?: boolean;
+}
+
+const Dropdown: React.FC<DropdownProps> = ({
+  options,
+  value,
+  onChange,
+  placeholder = 'Select an option',
+  className = '',
+  disabled = false,
+}) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  const selectedOption = options.find(option => option.value === value);
+
+  const toggleDropdown = () => {
+    if (!disabled) {
+      setIsOpen(!isOpen);
+    }
+  };
+
+  const handleOptionClick = (optionValue: string) => {
+    onChange(optionValue);
+    setIsOpen(false);
+  };
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
+
+  return (
+    <div className={`relative ${className}`} ref={dropdownRef}>
+      <button
+        type="button"
+        className={`w-full flex items-center justify-between px-4 py-2 text-left bg-white border border-gray-300 rounded-lg shadow-sm ${
+          disabled ? 'bg-gray-100 cursor-not-allowed' : 'hover:bg-gray-50'
+        }`}
+        onClick={toggleDropdown}
+        disabled={disabled}
+      >
+        <span className={`block truncate ${!selectedOption ? 'text-gray-500' : ''}`}>
+          {selectedOption ? selectedOption.label : placeholder}
+        </span>
+        <svg
+          className={`w-5 h-5 ml-2 transition-transform ${isOpen ? 'transform rotate-180' : ''}`}
+          xmlns="http://www.w3.org/2000/svg"
+          viewBox="0 0 20 20"
+          fill="currentColor"
+          aria-hidden="true"
+        >
+          <path
+            fillRule="evenodd"
+            d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
+            clipRule="evenodd"
+          />
+        </svg>
+      </button>
+
+      {isOpen && (
+        <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg">
+          <ul className="py-1 max-h-60 overflow-auto">
+            {options.map((option) => (
+              <li
+                key={option.value}
+                className={`px-4 py-2 cursor-pointer hover:bg-gray-100 ${
+                  option.value === value ? 'bg-gray-50 text-primary' : ''
+                }`}
+                onClick={() => handleOptionClick(option.value)}
+              >
+                {option.label}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default Dropdown;
+
+====== FILE: ./components/ui/Button.tsx ======
+
+'use client';
+
+import React, { ButtonHTMLAttributes } from 'react';
+
+type ButtonVariant = 'primary' | 'secondary' | 'outline';
+type ButtonSize = 'small' | 'medium' | 'large';
+
+interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
+  children: React.ReactNode;
+  variant?: ButtonVariant;
+  size?: ButtonSize;
+  className?: string;
+}
+
+const Button: React.FC<ButtonProps> = ({
+  children,
+  onClick,
+  variant = 'primary',
+  size = 'medium',
+  disabled = false,
+  type = 'button',
+  className = '',
+  ...props
+}) => {
+  const baseClasses = 'font-medium rounded transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2';
+  
+  const variants: Record<ButtonVariant, string> = {
+    primary: 'bg-primary text-white hover:bg-primary-dark disabled:bg-gray-400',
+    secondary: 'bg-gray-200 text-gray-800 hover:bg-gray-300 disabled:bg-gray-100',
+    outline: 'border border-gray-300 text-gray-700 hover:bg-gray-50 disabled:border-gray-200 disabled:text-gray-400',
+  };
+  
+  const sizes: Record<ButtonSize, string> = {
+    small: 'px-3 py-1 text-sm',
+    medium: 'px-4 py-2 text-base',
+    large: 'px-6 py-3 text-lg',
+  };
+  
+  const buttonClasses = `${baseClasses} ${variants[variant]} ${sizes[size]} ${disabled ? 'cursor-not-allowed' : ''} ${className}`;
+  
+  return (
+    <button
+      type={type}
+      onClick={onClick}
+      disabled={disabled}
+      className={buttonClasses}
+      {...props}
+    >
+      {children}
+    </button>
+  );
+};
+
+export default Button;
+
+====== FILE: ./components/common/Card.tsx ======
+
+'use client';
+
+import React, { ReactNode } from 'react';
+
+interface CardProps {
+  children: ReactNode;
+  className?: string;
+}
+
+const Card: React.FC<CardProps> = ({ children, className = '' }) => {
+  return (
+    <div className={`bg-white rounded-card shadow-card border border-[#f8f9fa] ${className}`}>
+      {children}
+    </div>
+  );
+};
+
+export default Card;
+
+====== FILE: ./components/common/Header.tsx ======
+
+'use client';
+
+import React from 'react';
+import Image from 'next/image';
+
+const Header: React.FC = () => {
+  return (
+    <div className="h-[120px] w-full bg-white flex items-center justify-between px-10">
+      {/* <h1 className="text-4xl font-semibold text-[#151d48]">Dashboard</h1> */}
+      
+      <div className="flex items-center">
+        <div className="relative flex items-center bg-[#f9fafb] rounded-2xl px-6 py-4 w-[513px]">
+          <Image 
+            src="/images/img_magnifier.svg" 
+            alt="Search" 
+            width={32} 
+            height={32} 
+            className="mr-2"
+          />
+          <input 
+            type="text" 
+            placeholder="Search here..." 
+            className="bg-transparent border-none outline-none text-lg text-[#737791] w-full"
+          />
+        </div>
+        
+        <div className="flex items-center ml-8">
+          <div className="flex items-center mr-4">
+            <Image 
+              src="/images/img_united.svg" 
+              alt="Language" 
+              width={24} 
+              height={24} 
+              className="mr-2"
+            />
+            <span className="text-lg font-semibold text-[#374557]">Eng (US)</span>
+            <Image 
+              src="/images/img_chevrondown.svg" 
+              alt="Dropdown" 
+              width={24} 
+              height={24} 
+              className="ml-2"
+            />
+          </div>
+          
+          <div className="relative mr-4">
+            <Image 
+              src="/images/img_notifications.svg" 
+              alt="Notifications" 
+              width={48} 
+              height={48} 
+            />
+            <span className="absolute top-0 right-0 w-4 h-4 bg-red-500 rounded-full text-xs text-white flex items-center justify-center">
+              3
+            </span>
+          </div>
+          
+          <div className="flex items-center">
+            <Image 
+              src="/images/img_rectangle_1393.png" 
+              alt="Profile" 
+              width={60} 
+              height={60} 
+              className="rounded-2xl mr-4"
+            />
+            <div>
+              <p className="text-base font-medium text-[#151d48]">Musfiq</p>
+              <p className="text-sm text-[#737791]">Admin</p>
+            </div>
+            <Image 
+              src="/images/img_group_21861.svg" 
+              alt="Dropdown" 
+              width={16} 
+              height={16} 
+              className="ml-2"
+            />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default Header;
+
+====== FILE: ./components/common/Sidebar.tsx ======
+
+'use client';
+
+import React from 'react';
+import Link from 'next/link';
+import Image from 'next/image';
+import { usePathname } from 'next/navigation';
+
+interface SidebarItem {
+  id: string;
+  title: string;
+  icon: string;
+  path: string;
+}
+
+const Sidebar: React.FC = () => {
+  const pathname = usePathname();
+
+  const sidebarItems: SidebarItem[] = [
+    {
+      id: 'dashboard',
+      title: 'Dashboard',
+      icon: '/images/img_group.svg',
+      path: '/dashboard',
+    },
+    {
+      id: 'helmet',
+      title: 'Helmet Assign',
+      icon: '/images/img_union.png',
+      path: '/helmet',
+    },
+    {
+      id: 'projects',
+      title: 'Projects/Sites',
+      icon: '/images/img_union_37x37.png',
+      path: '/projects',
+    },
+    {
+      id: 'reports',
+      title: 'Reports & Analytics',
+      icon: '/images/img_interface_chartline.svg',
+      path: '/reportsanalytics',
+    },
+    {
+      id: 'alerts',
+      title: 'Alerts & Issues',
+      icon: '/images/img_image.png',
+      path: '/alerts',
+    },
+    {
+      id: 'drawing',
+      title: 'Drawing & Bills',
+      icon: '/images/img_mdimessageprocessingoutline.png',
+      path: '/drawing',
+    },
+    {
+      id: 'settings',
+      title: 'Settings',
+      icon: '/images/img_mdicogoutline.svg',
+      path: '/settings',
+    },
+    {
+      id: 'signout',
+      title: 'Sign Out',
+      icon: '/images/img_sign_out_icon.svg',
+      path: '/signout',
+    },
+  ];
+
+  return (
+    <div className="h-full w-[345px] bg-white flex flex-col">
+      <div className="flex items-center p-10 mb-8">
+        <div className="w-14 h-14 bg-primary rounded-lg flex items-center justify-center">
+          <Image src="/images/img_dummy.svg" alt="Logo" width={24} height={24} />
+        </div>
+        <div className="ml-5">
+          <h1 className="text-3xl font-semibold text-secondary">Smartsite</h1>
+          <p className="text-sm font-semibold text-secondary">Ekinch</p>
+        </div>
+      </div>
+
+      <div className="flex flex-col space-y-4 px-10">
+        {sidebarItems.map((item) => {
+          const isActive = pathname === item.path;
+          return (
+            <Link
+              href={item.path}
+              key={item.id}
+              className={`flex items-center py-3 px-4 rounded-2xl transition-colors ${
+                isActive ? 'bg-primary' : 'hover:bg-gray-100'
+              }`}
+            >
+              <div className="w-8 h-8 flex items-center justify-center">
+                <Image
+                  src={item.icon}
+                  alt={item.title}
+                  width={32}
+                  height={32}
+                />
+              </div>
+              <span
+                className={`ml-4 text-lg ${
+                  isActive ? 'text-white font-semibold' : 'text-[#737791] font-normal'
+                }`}
+              >
+                {item.title}
+              </span>
+            </Link>
+          );
+        })}
+      </div>
+    </div>
+  );
+};
+
+export default Sidebar;

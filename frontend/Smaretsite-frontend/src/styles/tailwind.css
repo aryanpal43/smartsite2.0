@@ -1,0 +1,152 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Primary Colors */
+    --primary-background: #5d5fef;
+    --primary-foreground: #ffffff;
+    --primary-light: #7a65e2;
+    --primary-dark: #4b4dbe;
+
+    /* Secondary Colors */
+    --secondary-background: #ffffff;
+    --secondary-foreground: #151d48;
+    --secondary-light: #f9fafb;
+    --secondary-dark: #737791;
+
+    /* Accent Colors */
+    --accent-color: #00e095;
+    --accent-foreground: #ffffff;
+    --accent-light: #8bf9c6;
+    --accent-dark: #00b376;
+
+    /* Status Colors */
+    --status-active: #00e48f;
+    --status-hold: #884dff;
+    --status-complete: #ff8900;
+    --status-issue: #fa5a7d;
+
+    /* Chart Colors */
+    --chart-blue: #0094ff;
+    --chart-green: #00e095;
+    --chart-purple: #884dff;
+    --chart-orange: #ff8e0c;
+
+    /* Border Colors */
+    --border-primary: #f8f9fa;
+    --border-secondary: #ededed;
+    --border-light: #eef0f2;
+    --border-dark: #737791;
+  }
+}
+
+@layer utilities {
+  /* Background Color Utilities */
+  .bg-primary {
+    background-color: var(--primary-background);
+  }
+
+  .bg-secondary {
+    background-color: var(--secondary-background);
+  }
+
+  .bg-accent {
+    background-color: var(--accent-color);
+  }
+
+  .bg-status-active {
+    background-color: var(--status-active);
+  }
+
+  .bg-status-hold {
+    background-color: var(--status-hold);
+  }
+
+  .bg-status-complete {
+    background-color: var(--status-complete);
+  }
+
+  .bg-status-issue {
+    background-color: var(--status-issue);
+  }
+
+  .bg-chart-blue {
+    background-color: var(--chart-blue);
+  }
+
+  .bg-chart-green {
+    background-color: var(--chart-green);
+  }
+
+  .bg-chart-purple {
+    background-color: var(--chart-purple);
+  }
+
+  .bg-chart-orange {
+    background-color: var(--chart-orange);
+  }
+
+  /* Text Color Utilities */
+  .text-primary {
+    color: var(--primary-background);
+  }
+
+  .text-secondary {
+    color: var(--secondary-foreground);
+  }
+
+  .text-muted {
+    color: var(--secondary-dark);
+  }
+
+  .text-accent {
+    color: var(--accent-color);
+  }
+
+  .text-status-active {
+    color: var(--status-active);
+  }
+
+  .text-status-hold {
+    color: var(--status-hold);
+  }
+
+  .text-status-complete {
+    color: var(--status-complete);
+  }
+
+  .text-status-issue {
+    color: var(--status-issue);
+  }
+
+  /* Border Color Utilities */
+  .border-primary {
+    border-color: var(--border-primary);
+  }
+
+  .border-secondary {
+    border-color: var(--border-secondary);
+  }
+
+  .border-light {
+    border-color: var(--border-light);
+  }
+
+  .border-dark {
+    border-color: var(--border-dark);
+  }
+
+  .border-status-active {
+    border-color: var(--status-active);
+  }
+
+  .border-status-hold {
+    border-color: var(--status-hold);
+  }
+
+  .border-status-complete {
+    border-color: var(--status-complete);
+  }
+}

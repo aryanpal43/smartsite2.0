@@ -1,0 +1,12 @@
+@import './tailwind.css';
+
+/* Global styles */
+html, body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  font-family: 'Poppins', 'Open Sans', sans-serif;
+  background-color: #fafbfc;
+}
+
+/* Add any other global styles here */
